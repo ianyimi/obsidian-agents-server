@@ -1,6 +1,6 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
+	"name": "Obsidian Agents Server",
+	"version": "0.0.1",
 	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"scripts": {
@@ -12,13 +12,19 @@
 	"author": "",
 	"license": "MIT",
 	"devDependencies": {
+		"@semantic-release/changelog": "^6.0.3",
 		"@types/node": "^16.11.6",
 		"@typescript-eslint/eslint-plugin": "5.29.0",
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
+		"eslint-plugin-import-x": "^4.16.1",
+		"eslint-plugin-perfectionist": "^4.15.1",
+		"eslint-plugin-react-hooks": "^7.0.1",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
-		"typescript": "4.7.4"
-	}
+		"typescript": "4.7.4",
+		"typescript-eslint": "^8.47.0"
+	},
+	"packageManager": "pnpm@10.11.0"
 }
