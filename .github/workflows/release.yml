@@ -11,6 +11,7 @@ permissions:
   pull-requests: write
 
 jobs:
+  if: false
   release:
     name: Release
     runs-on: ubuntu-latest
