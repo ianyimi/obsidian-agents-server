@@ -2,17 +2,9 @@ import "./styles.css"
 
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-import { AgentsServerSettings } from './settings';
+import { AgentsServerSettings, ObsidianAgentsServerSettings, DEFAULT_SETTINGS } from './settings';
 
 // Remember to rename these classes and interfaces!
-
-interface ObsidianAgentsServerSettings {
-	mySetting: string;
-}
-
-const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
-	mySetting: 'default'
-}
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;

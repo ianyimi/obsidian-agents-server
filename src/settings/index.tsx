@@ -3,12 +3,21 @@ import ObsidianAgentsServer from "..";
 import { createRoot, Root } from "react-dom/client"
 import { type ReactNode, StrictMode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+
 import AgentsSettings from "./agents";
 
 interface SettingsTab {
 	valueId: string
 	triggerLabel: ReactNode | string,
 	content: ReactNode | string
+}
+
+export interface ObsidianAgentsServerSettings {
+	activeTab: string;
+}
+
+export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
+	activeTab: "agents"
 }
 
 export class AgentsServerSettings extends PluginSettingTab {
@@ -34,14 +43,14 @@ export class AgentsServerSettings extends PluginSettingTab {
 			{
 				valueId: "agents",
 				triggerLabel: "Agents",
-				content: <AgentsSettings plugin={plugin} />
+				content: <AgentsSettings plugin={this.plugin} />
 			},
 			{
 				valueId: "other",
 				triggerLabel: "Other",
 				content: <p className="text-center">Other Settings</p>
 			}
-		]
+		];
 	}
 
 	display(): void {
@@ -54,14 +63,14 @@ export class AgentsServerSettings extends PluginSettingTab {
 		this.root.render(
 			<StrictMode>
 				<div className="w-full h-full relative">
-					<h1 className="pb-4 text-center text-2xl">Agents Server Settings</h1>
+					<h1 className="pb-4 text-center text-2xl">Agents Server</h1>
 					<div className="flex flex-col items-center">
-						<Tabs defaultValue="agents" className="w-full grid place-items-center">
+						<Tabs defaultValue={this.plugin.settings.activeTab} className="w-full grid place-items-center" onValueChange={this.handleTabChange}>
 							<TabsList className="gap-4">
-								{this.tabs.map((t) => <TabsTrigger value={t.valueId} className="rounded">{t.triggerLabel}</TabsTrigger>)}
+								{this.tabs.map((t, i) => <TabsTrigger key={`settings-tab-trigger-${i}`} value={t.valueId} className="rounded">{t.triggerLabel}</TabsTrigger>)}
 							</TabsList>
 							<>
-								{this.tabs.map((t) => <TabsContent value={t.valueId} className="w-full">{t.content}</TabsContent>)}
+								{this.tabs.map((t, i) => <TabsContent key={`settings-tab-content-${i}`} value={t.valueId} className="w-full">{t.content}</TabsContent>)}
 							</>
 						</Tabs>
 					</div>
@@ -80,6 +89,11 @@ export class AgentsServerSettings extends PluginSettingTab {
 		// 			this.plugin.settings.mySetting = value;
 		// 			await this.plugin.saveSettings();
 		// 		}));
+	}
+
+	handleTabChange = async (value: string): Promise<void> => {
+		this.plugin.settings.activeTab = value;
+		await this.plugin.saveSettings()
 	}
 
 	hide(): void {
