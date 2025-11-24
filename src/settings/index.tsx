@@ -46,7 +46,7 @@ export class AgentsServerSettings extends PluginSettingTab {
 
 	display(): void {
 		const { containerEl } = this;
-		containerEl.empty();
+
 		if (!this.root) {
 			this.root = createRoot(containerEl)
 		}
@@ -83,7 +83,10 @@ export class AgentsServerSettings extends PluginSettingTab {
 	}
 
 	hide(): void {
-		this.root?.unmount()
+		if (this.root) {
+			this.root.unmount();
+			this.root = null;
+		}
 	}
 }
 
