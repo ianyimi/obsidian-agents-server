@@ -1,4 +1,8 @@
+import "./styles.css"
+
 import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+
+import { AgentsServerSettings } from './settings';
 
 // Remember to rename these classes and interfaces!
 
@@ -66,7 +70,7 @@ export default class ObsidianAgentsServer extends Plugin {
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new AgentsServerSettings(this.app, this));
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
@@ -80,6 +84,12 @@ export default class ObsidianAgentsServer extends Plugin {
 
 	onunload() {
 
+	}
+
+	loadDefaultSettings() {
+		return {
+			...DEFAULT_SETTINGS
+		}
 	}
 
 	async loadSettings() {
@@ -104,31 +114,5 @@ class SampleModal extends Modal {
 	onClose() {
 		const { contentEl } = this;
 		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: ObsidianAgentsServer;
-
-	constructor(app: App, plugin: ObsidianAgentsServer) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const { containerEl } = this;
-
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
 	}
 }

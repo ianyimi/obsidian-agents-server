@@ -3,9 +3,14 @@ import { FlatCompat } from "@eslint/eslintrc";
 import tseslint from "typescript-eslint";
 import perfectionist from "eslint-plugin-perfectionist";
 import importX from "eslint-plugin-import-x";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const compat = new FlatCompat({
-	baseDirectory: import.meta.dirname,
+	baseDirectory: __dirname,
 });
 
 export const defaultESLintIgnores = [
@@ -135,7 +140,7 @@ export default tseslint.config(
 				project: "./tsconfig.json",
 				sourceType: "module",
 				ecmaVersion: "latest",
-				tsconfigRootDir: import.meta.dirname,
+				tsconfigRootDir: __dirname,
 			},
 		},
 	},
