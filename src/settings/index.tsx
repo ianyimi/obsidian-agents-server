@@ -4,15 +4,13 @@ import { createRoot, Root } from "react-dom/client"
 import { type ReactNode, StrictMode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
-import AgentsSettings from "./agents";
-import ModelSettings from "./models"
+import AgentsSettings from "~/agents/settings";
+import ModelSettings from "../models/settings"
 import GeneralSettings from "./general";
-import { ModelProvider } from "~/providers";
-import { MODEL_PROVIDERS } from "./models/providers";
-import { LMStudio } from "~/providers/lmstudio";
+import { ModelProvider } from "~/models/providers";
 
 interface SettingsTab {
-	valueId: string
+	valueID: string
 	triggerLabel: ReactNode | string,
 	content: ReactNode | string
 }
@@ -22,17 +20,17 @@ export class AgentsServerSettings extends PluginSettingTab {
 	root: Root | null = null;
 	tabs: SettingsTab[] = [
 		{
-			valueId: "general",
+			valueID: "general",
 			triggerLabel: "General",
 			content: "Loading..."
 		},
 		{
-			valueId: "agents",
+			valueID: "agents",
 			triggerLabel: "Agents",
 			content: "Loading..."
 		},
 		{
-			valueId: "models",
+			valueID: "models",
 			triggerLabel: "Models",
 			content: "Loading..."
 		}
@@ -43,17 +41,17 @@ export class AgentsServerSettings extends PluginSettingTab {
 		this.plugin = plugin;
 		this.tabs = [
 			{
-				valueId: "general",
+				valueID: "general",
 				triggerLabel: "General",
 				content: <GeneralSettings plugin={this.plugin} />
 			},
 			{
-				valueId: "agents",
+				valueID: "agents",
 				triggerLabel: "Agents",
 				content: <AgentsSettings plugin={this.plugin} modelProviders={modelProviders} />
 			},
 			{
-				valueId: "models",
+				valueID: "models",
 				triggerLabel: "Models",
 				content: <ModelSettings plugin={this.plugin} />
 			}
@@ -74,10 +72,10 @@ export class AgentsServerSettings extends PluginSettingTab {
 					<div className="flex flex-col items-center">
 						<Tabs defaultValue={this.plugin.settings.activeTab} className="w-full grid place-items-center" onValueChange={this.handleTabChange}>
 							<TabsList className="gap-4">
-								{this.tabs.map((t, i) => <TabsTrigger key={`settings-tab-trigger-${i}`} value={t.valueId} className="rounded">{t.triggerLabel}</TabsTrigger>)}
+								{this.tabs.map((t, i) => <TabsTrigger key={`settings-tab-trigger-${i}`} value={t.valueID} className="rounded">{t.triggerLabel}</TabsTrigger>)}
 							</TabsList>
 							<>
-								{this.tabs.map((t, i) => <TabsContent key={`settings-tab-content-${i}`} value={t.valueId} className="w-full">{t.content}</TabsContent>)}
+								{this.tabs.map((t, i) => <TabsContent key={`settings-tab-content-${i}`} value={t.valueID} className="w-full">{t.content}</TabsContent>)}
 							</>
 						</Tabs>
 					</div>

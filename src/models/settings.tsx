@@ -1,9 +1,9 @@
 import { useForm, useStore } from "@tanstack/react-form";
-import ObsidianAgentsServer from "../..";
+import ObsidianAgentsServer from "~/index";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
-import { MODEL_PROVIDERS, ModelProviderID } from "./providers";
+import { MODEL_PROVIDERS, ModelProviderID } from "~/models/providers/constants";
 import { Trash } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Notice } from "obsidian";
@@ -36,9 +36,9 @@ export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer
 			<form.Field name="modelProviders" mode="array">
 				{(field) => (
 					<div>
-						<Select value={undefined} onValueChange={(value) => {
+						<Select onValueChange={(value) => {
 							const provider = MODEL_PROVIDERS[value as ModelProviderID]
-							field.pushValue({ id: value as ModelProviderID, label: provider.label, baseUrl: provider.baseUrl })
+							field.pushValue({ id: value as ModelProviderID, label: provider.label, baseURL: provider.baseURL })
 							form.handleSubmit()
 						}}>
 							<SelectTrigger>
@@ -62,7 +62,7 @@ export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer
 									field.removeValue(i)
 									form.handleSubmit()
 								}} className="absolute cursor-pointer right-4 top-2 hover:stroke-red-600 transition-colors duration-300" />
-								<form.Field name={`modelProviders[${i}].baseUrl`}>
+								<form.Field name={`modelProviders[${i}].baseURL`}>
 									{(subField) => {
 										return (
 											<>

@@ -391,53 +391,422 @@ obsidian-agent-server/
 
 ## Implementation Tasks
 
+### 🎯 Current Status & Next Steps
+
+**✅ Completed (Foundation)**
+- Device ID system with settings UI
+- Model provider abstraction (LMStudio working)
+- Agent configuration system with full CRUD UI
+- Basic Hono server initialized
+- GET /v1/models endpoint (lists agents)
+- CORS configured
+
+**🚧 In Progress**
+- POST /v1/chat/completions endpoint (started but incomplete)
+
+**🔴 Critical Missing Pieces (Priority Order)**
+
+1. **Start the Hono Server** - Without this, nothing works!
+   - Use @hono/node-server's `serve()` function
+   - Bind to 0.0.0.0 to allow network access
+   - Store server instance for cleanup in onunload()
+   - Add port configuration to settings
+
+2. **Complete /v1/chat/completions Endpoint**
+   - Extract model name and messages from request body
+   - Find agent by name
+   - Run agent with messages
+   - Handle streaming vs non-streaming responses
+   - Format response in OpenAI format
+
+3. **Implement Agent Functions**
+   - Create src/functions/ folder
+   - Start with basic vault functions (search, read, create, edit)
+   - These are needed for agents to actually do useful work
+
+4. **Session Management**
+   - Install better-sqlite3
+   - Implement session persistence
+   - Integrate with chat completions endpoint
+
+5. **WebSocket Server** (for completion notifications)
+   - Install ws
+   - Create websocket server
+   - Send notifications after agent completions
+
+---
+
+### 📝 Implementation Guidance for Critical Pieces
+
+#### 1. Starting the Hono Server
+
+**Update src/index.ts:106-143:**
+
+```typescript
+import { serve } from '@hono/node-server';
+
+initializeServer(plugin: ObsidianAgentsServer) {
+    if (!this.isControlDevice) {
+        console.log('Not control device, skipping server initialization');
+        return;
+    }
+
+    const app = new Hono();
+    this.server = app;
+
+    app.use("/*", cors())
+
+    // ... existing routes ...
+
+    // Start the server
+    const port = this.settings.serverPort || 8001;
+    const server = serve({
+        fetch: app.fetch,
+        port,
+        hostname: '0.0.0.0', // Important for network access!
+    });
+
+    console.log(`🚀 Agents Server running on http://0.0.0.0:${port}`);
+    console.log(`📝 Available agents: ${this.agents.map(a => a.name).join(', ')}`);
+
+    // Store for cleanup
+    this.httpServer = server;
+}
+```
+
+**Update ObsidianAgentsServerSettings interface:**
+```typescript
+export interface ObsidianAgentsServerSettings {
+    activeTab: string;
+    deviceID: string;
+    controlDeviceID: string;
+    serverPort: number;          // ADD THIS
+    websocketPort: number;       // ADD THIS
+    modelProviders: ModelProviderSettings[]
+    agents: AgentConfig[]
+}
+
+export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
+    activeTab: "agents",
+    deviceID: "",
+    controlDeviceID: "",
+    serverPort: 8001,            // ADD THIS
+    websocketPort: 8002,         // ADD THIS
+    modelProviders: [],
+    agents: []
+}
+```
+
+**Update plugin class:**
+```typescript
+export default class ObsidianAgentsServer extends Plugin {
+    settings: ObsidianAgentsServerSettings;
+    isControlDevice: boolean = false;
+    modelProviders: ModelProvider[] = []
+    agents: Agent[]
+    server?: Hono
+    httpServer?: any;  // ADD THIS for @hono/node-server instance
+
+    onunload() {
+        // Cleanup server
+        if (this.httpServer) {
+            this.httpServer.close();
+            console.log('Agents server stopped');
+        }
+    }
+}
+```
+
+#### 2. Completing /v1/chat/completions
+
+**Replace src/index.ts:128-141 with:**
+
+```typescript
+app.post("/v1/chat/completions", async (c) => {
+    try {
+        const body = await c.req.json()
+        const { model, messages, stream = false } = body;
+
+        // Find agent by name
+        const agent = plugin.agents.find(a => a.name === model);
+        if (!agent) {
+            return c.json({
+                error: {
+                    message: `Model '${model}' not found. Available models: ${plugin.agents.map(a => a.name).join(', ')}`,
+                    type: 'invalid_request_error'
+                }
+            }, 404);
+        }
+
+        // Non-streaming response
+        if (!stream) {
+            const result = await agent.run({ messages });
+
+            // Find the final text content
+            let responseText = '';
+            if (result.text) {
+                responseText = result.text;
+            } else if (result.messages && result.messages.length > 0) {
+                const lastMessage = result.messages[result.messages.length - 1];
+                if (lastMessage.role === 'assistant' && typeof lastMessage.content === 'string') {
+                    responseText = lastMessage.content;
+                }
+            }
+
+            return c.json({
+                id: `chatcmpl-${Date.now()}`,
+                object: 'chat.completion',
+                created: Math.floor(Date.now() / 1000),
+                model: model,
+                choices: [{
+                    index: 0,
+                    message: {
+                        role: 'assistant',
+                        content: responseText,
+                    },
+                    finish_reason: 'stop',
+                }],
+                usage: {
+                    prompt_tokens: 0,
+                    completion_tokens: 0,
+                    total_tokens: 0,
+                },
+            });
+        }
+
+        // TODO: Implement streaming response using streamSSE
+        // For now, fall back to non-streaming
+        return c.json({
+            error: {
+                message: 'Streaming not yet implemented',
+                type: 'not_implemented'
+            }
+        }, 501);
+
+    } catch (err: any) {
+        console.error('Error handling chat completion:', err);
+        return c.json({
+            error: {
+                message: err?.message ?? "Internal Server Error",
+                type: "internal_error"
+            }
+        }, 500);
+    }
+})
+```
+
+#### 3. Basic Agent Functions
+
+**Create src/functions/vault.ts:**
+
+```typescript
+import { TFile, TFolder } from 'obsidian';
+import ObsidianAgentsServer from '~/index';
+
+export function createVaultFunctions(plugin: ObsidianAgentsServer) {
+    return {
+        search_notes: {
+            description: 'Search for notes in the vault by content or filename',
+            parameters: {
+                type: 'object',
+                properties: {
+                    query: {
+                        type: 'string',
+                        description: 'Search query'
+                    }
+                },
+                required: ['query']
+            },
+            execute: async ({ query }: { query: string }) => {
+                const files = plugin.app.vault.getMarkdownFiles();
+                const results = [];
+
+                for (const file of files) {
+                    const content = await plugin.app.vault.read(file);
+                    if (content.toLowerCase().includes(query.toLowerCase()) ||
+                        file.basename.toLowerCase().includes(query.toLowerCase())) {
+                        results.push({
+                            path: file.path,
+                            name: file.basename,
+                            excerpt: content.substring(0, 200)
+                        });
+                    }
+                }
+
+                return {
+                    results: results.slice(0, 10),
+                    total: results.length
+                };
+            }
+        },
+
+        read_note: {
+            description: 'Read the contents of a note',
+            parameters: {
+                type: 'object',
+                properties: {
+                    path: {
+                        type: 'string',
+                        description: 'Path to the note'
+                    }
+                },
+                required: ['path']
+            },
+            execute: async ({ path }: { path: string }) => {
+                const file = plugin.app.vault.getAbstractFileByPath(path);
+                if (!file || !(file instanceof TFile)) {
+                    return { error: `Note not found: ${path}` };
+                }
+                const content = await plugin.app.vault.read(file);
+                return { path, content };
+            }
+        },
+
+        create_note: {
+            description: 'Create a new note',
+            parameters: {
+                type: 'object',
+                properties: {
+                    path: {
+                        type: 'string',
+                        description: 'Path for the new note (must end in .md)'
+                    },
+                    content: {
+                        type: 'string',
+                        description: 'Content of the note'
+                    }
+                },
+                required: ['path', 'content']
+            },
+            execute: async ({ path, content }: { path: string; content: string }) => {
+                const exists = await plugin.app.vault.adapter.exists(path);
+                if (exists) {
+                    return { error: `Note already exists: ${path}` };
+                }
+                await plugin.app.vault.create(path, content);
+                return { success: true, path };
+            }
+        },
+
+        list_notes: {
+            description: 'List all notes in a folder',
+            parameters: {
+                type: 'object',
+                properties: {
+                    folder: {
+                        type: 'string',
+                        description: 'Folder path (empty string for root)'
+                    }
+                }
+            },
+            execute: async ({ folder = '' }: { folder?: string }) => {
+                const files = plugin.app.vault.getMarkdownFiles();
+                const filtered = folder
+                    ? files.filter(f => f.path.startsWith(folder))
+                    : files;
+
+                return {
+                    files: filtered.map(f => ({
+                        path: f.path,
+                        name: f.basename,
+                        folder: f.parent?.path || ''
+                    })),
+                    count: filtered.length
+                };
+            }
+        }
+    };
+}
+```
+
+**Update agent initialization in src/index.ts:**
+
+```typescript
+import { createVaultFunctions } from '~/functions/vault';
+
+initializeAgents(plugin: ObsidianAgentsServer): Agent[] {
+    const agents = []
+    const vaultFunctions = createVaultFunctions(plugin);
+
+    for (const agent of plugin.settings.agents) {
+        const modelProvider = this.modelProviders.find(mp => mp.id === agent.modelProvider)
+        if (!modelProvider?.instance) continue
+        const model = aisdk(modelProvider.instance(agent.model))
+        agents.push(
+            new Agent({
+                name: agent.name,
+                instructions: agent.instructions,
+                model,
+                functions: Object.values(vaultFunctions), // ADD THIS
+            })
+        )
+    }
+    return agents
+}
+```
+
+---
+
 ### Setup & Configuration
 
 **Project Structure**
-- [ ] Create folder structure (agents/, api/, functions/, services/, models/, ui/)
-- [ ] Initialize TypeScript configuration
-- [ ] Set up build system (esbuild/rollup)
+- [x] Create folder structure (agents/, models/, providers/, settings/)
+- [x] Initialize TypeScript configuration
+- [x] Set up build system (Vite)
 
 **Dependencies**
 ```bash
-npm install @openai/agents openai ws express cors better-sqlite3
-npm install --save-dev @types/express @types/ws @types/better-sqlite3
+# Already installed:
+@openai/agents @openai/agents-extensions
+@ai-sdk/openai-compatible
+hono @hono/node-server
+nanoid zod
+
+# Still needed:
+ws better-sqlite3
+npm install --save-dev @types/ws @types/better-sqlite3
 ```
 
 **Device ID System**
-- [ ] Generate UUID on first install
-- [ ] Create settings UI for device ID display/copy
-- [ ] Create input field for control device ID
-- [ ] Add computed property: isControlDevice
-- [ ] Add status indicator showing control/client mode
+- [x] Generate UUID on first install (src/index.ts:61)
+- [x] Create settings UI for device ID display/copy (src/settings/general/index.tsx:38-54)
+- [x] Create input field for control device ID (src/settings/general/index.tsx:59-74)
+- [x] Add computed property: isControlDevice (src/index.ts:66)
+- [ ] Add status indicator showing control/client mode (in settings UI)
 
 ---
 
 ### Core Agent System
 
-**LM Studio Client**
-- [ ] Configure OpenAI client pointing to localhost:1234
-- [ ] Set as global client: `setDefaultOpenAIClient(lmStudioClient)`
-- [ ] Set API mode: `setOpenAIAPI('chat_completions')`
+**Model Providers**
+- [x] Create ModelProvider base class (src/providers/index.ts)
+- [x] Implement LMStudio provider (src/providers/lmstudio.ts)
+- [x] Configure OpenAI-compatible client pointing to localhost:1234
+- [x] Fetch models from provider on initialization
+- [ ] Add Ollama provider implementation
 
-**Journal Agent**
+**Agent Configuration**
+- [x] Agent types and interfaces (src/agents/types.ts)
+- [x] Agent settings UI with full CRUD (src/agents/settings.tsx)
+- [x] Agent initialization in plugin (src/index.ts:75-89)
+- [x] Link agents to model providers
+
+**Agent Functions (NOT YET IMPLEMENTED)**
+- [ ] Create src/functions/ folder
 - [ ] Implement journal functions (create_today, log_info)
-- [ ] Create journal agent with direct function calls
-- [ ] Test standalone journal agent
-
-**System Builder Agent**
-- [ ] Implement fetch_plugin_docs function
+- [ ] Implement search_notes function
 - [ ] Implement util_create_file function
 - [ ] Implement util_edit_file function
 - [ ] Implement util_list_files function
-- [ ] Create system builder agent definition
-- [ ] Test plugin docs fetching
-- [ ] Test file creation/editing
+- [ ] Implement util_update_frontmatter function
+- [ ] Implement util_get_datetime function
+- [ ] Implement fetch_plugin_docs function
 
-**Orchestrator Agent**
-- [ ] Create orchestrator with handoffs
-- [ ] Test routing to journal agent
-- [ ] Test routing to system builder agent
+**Agent Definitions (NOT YET IMPLEMENTED)**
+- [ ] Create Journal Agent with functions
+- [ ] Create System Builder Agent with functions
+- [ ] Create Orchestrator Agent with handoffs
+- [ ] Test standalone agents
 - [ ] Test multi-agent workflows
 
 ---
@@ -445,14 +814,23 @@ npm install --save-dev @types/express @types/ws @types/better-sqlite3
 ### REST API
 
 **Server Setup**
-- [ ] Initialize Express server
+- [x] Initialize Hono server (src/index.ts:106-143)
+- [x] Configure CORS (src/index.ts:110)
+- [ ] Actually start the server with @hono/node-server
 - [ ] Bind to 0.0.0.0 (network access)
-- [ ] Configure CORS
-- [ ] Add request logging
+- [ ] Add server port configuration to settings
+- [ ] Add server status indicator in settings
+- [ ] Add request logging middleware
 
 **Endpoints**
-- [ ] POST /v1/chat/completions (main chat)
-- [ ] GET /v1/models (list agents)
+- [x] GET /v1/models (list agents) (src/index.ts:112-126)
+- [ ] POST /v1/chat/completions - INCOMPLETE (src/index.ts:128-141)
+  - [ ] Extract model and messages from body
+  - [ ] Find agent by name
+  - [ ] Handle streaming vs non-streaming
+  - [ ] Run agent with messages
+  - [ ] Format response in OpenAI format
+  - [ ] Return proper error responses
 - [ ] GET /v1/status (health check)
 - [ ] POST /v1/tools/:toolName (direct tool calls)
 - [ ] GET /v1/sessions (list sessions)
@@ -469,20 +847,24 @@ npm install --save-dev @types/express @types/ws @types/better-sqlite3
 ### Session Management
 
 **Database Setup**
-- [ ] Initialize SQLite database (sessions.db)
+- [ ] Install better-sqlite3
+- [ ] Create src/services/session-manager.ts
+- [ ] Initialize SQLite database (sessions.db in plugin data folder)
 - [ ] Create sessions table schema
 - [ ] Create messages table schema
 
 **Session Manager**
-- [ ] Create session on first message
-- [ ] Load session by ID
-- [ ] Append messages to session
-- [ ] Persist to SQLite
-- [ ] Cleanup old sessions (>7 days inactive)
+- [ ] Create SessionManager class
+- [ ] Implement createSession(deviceId, agent)
+- [ ] Implement loadSession(id)
+- [ ] Implement appendMessage(sessionId, message)
+- [ ] Implement persistSession(session)
+- [ ] Implement cleanupOldSessions() (>7 days inactive)
 
 **API Integration**
-- [ ] Extract/generate session ID from requests
+- [ ] Extract/generate session ID from request headers
 - [ ] Load session before processing query
+- [ ] Pass session history to agent
 - [ ] Save session after response
 - [ ] Return session ID in response headers
 
@@ -491,44 +873,52 @@ npm install --save-dev @types/express @types/ws @types/better-sqlite3
 ### WebSocket Server
 
 **Server Setup**
+- [ ] Install ws package
+- [ ] Create src/services/websocket-server.ts
 - [ ] Initialize WebSocket server on port 8002
-- [ ] Track connected clients
+- [ ] Track connected clients Map<deviceId, WebSocket>
 - [ ] Handle client connect/disconnect
 - [ ] Handle reconnection logic
+- [ ] Add websocket port to settings
 
 **Notifications (Phase 1: Completion Summaries Only)**
 - [ ] Send completion_summary after agent finishes
 - [ ] Include filesModified, filesCreated, summary
 - [ ] Send error notifications on failures
 - [ ] Add session ID to all messages
+- [ ] Broadcast to all connected clients or specific device
 
 ---
 
 ### Error Handling
 
-**Global Error Handlers**
-- [ ] Process-level uncaughtException handler
-- [ ] Process-level unhandledRejection handler
-- [ ] Express error middleware
+**Server-Level Error Handling**
+- [x] Try/catch in chat completions endpoint (src/index.ts:129-140)
+- [ ] Add global error handler for Hono
+- [ ] Add process-level uncaughtException handler
+- [ ] Add process-level unhandledRejection handler
 - [ ] WebSocket error handler
 
 **LM Studio Health Monitoring**
-- [ ] Periodic health check (every 10s)
-- [ ] Check /v1/models endpoint
-- [ ] Track health status
-- [ ] Block requests if unhealthy
+- [ ] Create src/services/health-monitor.ts
+- [ ] Implement periodic health check (every 10s)
+- [ ] Check /v1/models endpoint on each provider
+- [ ] Track health status per provider
+- [ ] Add isHealthy() method to ModelProvider
+- [ ] Block agent requests if provider unhealthy
 - [ ] Return clear errors to clients
 
 **Request-Level Error Handling**
-- [ ] Wrap all endpoints in try/catch
-- [ ] Return structured error responses
-- [ ] Log errors with context
+- [ ] Add error middleware to Hono
+- [ ] Return structured error responses (OpenAI format)
+- [ ] Log errors with context (timestamp, endpoint, body)
 - [ ] Never crash server on error
 
 **Timeout Protection**
-- [ ] 60s timeout on all agent queries
+- [ ] Add 60s timeout wrapper for agent.run()
 - [ ] Return timeout error to client
 - [ ] Continue server operation
+- [ ] Log timeout events
 
 ---
 

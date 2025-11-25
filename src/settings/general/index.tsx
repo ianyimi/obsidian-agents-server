@@ -9,11 +9,11 @@ import { Notice } from "obsidian";
 export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServer }) {
 	const form = useForm({
 		defaultValues: {
-			deviceId: plugin.settings.deviceId,
-			controlDeviceId: plugin.settings.controlDeviceId
+			deviceID: plugin.settings.deviceID,
+			controlDeviceID: plugin.settings.controlDeviceID
 		},
 		onSubmit: async ({ value }) => {
-			plugin.settings.controlDeviceId = value.controlDeviceId
+			plugin.settings.controlDeviceID = value.controlDeviceID
 			await plugin.saveSettings()
 			new Notice("Settings Updated!")
 		}
@@ -31,7 +31,7 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 			<Button type="submit" className="right-0 absolute">Save</Button>
 			<p className="text-center w-full">General Settings</p>
 			<form.Field
-				name="deviceId"
+				name="deviceID"
 				children={(field) => {
 					return (
 						<div className="relative">
@@ -57,7 +57,7 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 				}}
 			/>
 			<form.Field
-				name="controlDeviceId"
+				name="controlDeviceID"
 				children={(field) => {
 					return (
 						<>

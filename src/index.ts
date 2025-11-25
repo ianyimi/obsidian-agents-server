@@ -1,40 +1,31 @@
 import "./styles.css"
 
 import { Plugin } from 'obsidian';
+import { Agent } from "@openai/agents"
 
 import { AgentsServerSettings } from '~/settings';
-import initAgentsServer from "~/core";
 import { nanoid } from "nanoid";
-import { MODEL_PROVIDERS, ModelProviderSettings } from "~/settings/models/providers";
-import { Agent } from "~/settings/agents/types";
-import { ModelProvider } from "./providers";
-import { LMStudio } from "./providers/lmstudio";
+import { MODEL_PROVIDERS } from "~/models/providers/constants";
+import { ModelProvider } from "~/models/providers";
+import { LMStudio } from "~/models/providers/lmstudio";
+import { aisdk } from "@openai/agents-extensions";
 
-export interface ObsidianAgentsServerSettings {
-	activeTab: string;
-	deviceId: string;
-	controlDeviceId: string;
-	modelProviders: ModelProviderSettings[]
-	agents: Agent[]
-}
-
-export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
-	activeTab: "agents",
-	deviceId: "",
-	controlDeviceId: "",
-	modelProviders: [],
-	agents: []
-}
+import { Hono } from "hono";
+import { cors } from "hono/cors"
+import { DEFAULT_SETTINGS, ObsidianAgentsServerSettings } from "~/settings/types";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
 	isControlDevice: boolean = false;
 	modelProviders: ModelProvider[] = []
+	agents: Agent[]
+	server?: Hono
 
 	async onload() {
 		await this.loadSettings();
 		this.modelProviders = this.initializeModelProviders(this);
-		initAgentsServer({ plugin: this, modelProviders: this.modelProviders })
+		this.agents = this.initializeAgents(this)
+		this.initializeServer(this)
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new AgentsServerSettings({ app: this.app, plugin: this, modelProviders: this.modelProviders }));
@@ -50,19 +41,36 @@ export default class ObsidianAgentsServer extends Plugin {
 		// Merge loaded data with defaults
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
 
-		// Generate deviceId only if it doesn't exist or is empty
-		if (!this.settings.deviceId || this.settings.deviceId === "") {
-			this.settings.deviceId = nanoid();
+		// Generate deviceID only if it doesn't exist or is empty
+		if (!this.settings.deviceID || this.settings.deviceID === "") {
+			this.settings.deviceID = nanoid();
 			await this.saveSettings();
 		} else {
-			if (this.settings.controlDeviceId !== "") {
-				this.isControlDevice = this.settings.controlDeviceId === this.settings.deviceId
+			if (this.settings.controlDeviceID !== "") {
+				this.isControlDevice = this.settings.controlDeviceID === this.settings.deviceID
 			}
 		}
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+
+	initializeAgents(plugin: ObsidianAgentsServer): Agent[] {
+		const agents = []
+		for (const agent of plugin.settings.agents) {
+			const modelProvider = this.modelProviders.find(mp => mp.id === agent.modelProvider)
+			if (!modelProvider?.instance) continue
+			const model = aisdk(modelProvider.instance(agent.model))
+			agents.push(
+				new Agent({
+					name: agent.name,
+					instructions: agent.instructions,
+					model,
+				})
+			)
+		}
+		return agents
 	}
 
 	initializeModelProviders(plugin: ObsidianAgentsServer): ModelProvider[] {
@@ -77,5 +85,44 @@ export default class ObsidianAgentsServer extends Plugin {
 			}
 		}
 		return providers
+	}
+
+	initializeServer(plugin: ObsidianAgentsServer) {
+		const app = new Hono();
+		this.server = app;
+
+		app.use("/*", cors())
+
+		app.get("v1/models", (c) => {
+			const models = plugin.agents.map((agent) => ({
+				id: agent.name,
+				object: "model",
+				created: Date.now(),
+				owned_by: "obsidian-agents-server",
+				permission: [],
+				root: agent.name,
+				parent: null
+			}))
+			return c.json({
+				object: "list",
+				data: models
+			})
+		})
+
+		app.get("v1/chat/completions", async (c) => {
+			try {
+				const body = await c.req.json()
+				// todo: implement chat completion and agent run logic here
+			} catch (err) {
+				console.error('error handling chat completion: ', err)
+				return c.json({
+					error: {
+						message: err?.message ?? "Internal Server Error",
+						type: "internal_error"
+					}
+				}, 500)
+			}
+		})
+
 	}
 }
