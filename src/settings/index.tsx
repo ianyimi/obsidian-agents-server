@@ -12,14 +12,6 @@ interface SettingsTab {
 	content: ReactNode | string
 }
 
-export interface ObsidianAgentsServerSettings {
-	activeTab: string;
-}
-
-export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
-	activeTab: "agents"
-}
-
 export class AgentsServerSettings extends PluginSettingTab {
 	plugin: ObsidianAgentsServer;
 	root: Root | null = null;

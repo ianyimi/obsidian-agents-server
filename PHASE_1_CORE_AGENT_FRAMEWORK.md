@@ -681,7 +681,6 @@ User: "Yes, create it"
 [Agent sends WebSocket notification: "Goal tracking system created"]
 
 User (on MacBook): Receives notification, opens Goals/ folder, sees new system
-```
 
 ### Finance Management System
 
