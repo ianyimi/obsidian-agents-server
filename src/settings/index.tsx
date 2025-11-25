@@ -1,10 +1,15 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, PluginSettingTab } from "obsidian";
 import ObsidianAgentsServer from "..";
 import { createRoot, Root } from "react-dom/client"
 import { type ReactNode, StrictMode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 import AgentsSettings from "./agents";
+import ModelSettings from "./models"
+import GeneralSettings from "./general";
+import { ModelProvider } from "~/providers";
+import { MODEL_PROVIDERS } from "./models/providers";
+import { LMStudio } from "~/providers/lmstudio";
 
 interface SettingsTab {
 	valueId: string
@@ -17,30 +22,40 @@ export class AgentsServerSettings extends PluginSettingTab {
 	root: Root | null = null;
 	tabs: SettingsTab[] = [
 		{
+			valueId: "general",
+			triggerLabel: "General",
+			content: "Loading..."
+		},
+		{
 			valueId: "agents",
 			triggerLabel: "Agents",
 			content: "Loading..."
 		},
 		{
-			valueId: "other",
-			triggerLabel: "Other",
+			valueId: "models",
+			triggerLabel: "Models",
 			content: "Loading..."
 		}
 	]
 
-	constructor(app: App, plugin: ObsidianAgentsServer) {
+	constructor({ app, plugin, modelProviders }: { app: App, plugin: ObsidianAgentsServer, modelProviders: ModelProvider[] }) {
 		super(app, plugin);
 		this.plugin = plugin;
 		this.tabs = [
 			{
-				valueId: "agents",
-				triggerLabel: "Agents",
-				content: <AgentsSettings plugin={this.plugin} />
+				valueId: "general",
+				triggerLabel: "General",
+				content: <GeneralSettings plugin={this.plugin} />
 			},
 			{
-				valueId: "other",
-				triggerLabel: "Other",
-				content: <p className="text-center">Other Settings</p>
+				valueId: "agents",
+				triggerLabel: "Agents",
+				content: <AgentsSettings plugin={this.plugin} modelProviders={modelProviders} />
+			},
+			{
+				valueId: "models",
+				triggerLabel: "Models",
+				content: <ModelSettings plugin={this.plugin} />
 			}
 		];
 	}
@@ -69,18 +84,6 @@ export class AgentsServerSettings extends PluginSettingTab {
 				</div>
 			</StrictMode>
 		)
-
-		// Example Setting to show how to modify and save plugin settings
-		// new Setting(containerEl)
-		// 	.setName('Setting #1')
-		// 	.setDesc('It\'s a secret')
-		// 	.addText(text => text
-		// 		.setPlaceholder('Enter your secret')
-		// 		.setValue(this.plugin.settings.mySetting)
-		// 		.onChange(async (value) => {
-		// 			this.plugin.settings.mySetting = value;
-		// 			await this.plugin.saveSettings();
-		// 		}));
 	}
 
 	handleTabChange = async (value: string): Promise<void> => {
@@ -94,5 +97,6 @@ export class AgentsServerSettings extends PluginSettingTab {
 			this.root = null;
 		}
 	}
+
 }
 
