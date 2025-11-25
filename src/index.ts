@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
+	isControlDevice: boolean = false;
 
 	async onload() {
 		await this.loadSettings();
@@ -43,6 +44,10 @@ export default class ObsidianAgentsServer extends Plugin {
 		if (!this.settings.deviceId || this.settings.deviceId === "") {
 			this.settings.deviceId = nanoid();
 			await this.saveSettings();
+		} else {
+			if (this.settings.controlDeviceId !== "") {
+				this.isControlDevice = this.settings.controlDeviceId === this.settings.deviceId
+			}
 		}
 	}
 
