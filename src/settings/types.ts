@@ -4,6 +4,7 @@ import { Agent as AgentConfig } from "~/agents/types";
 export interface ObsidianAgentsServerSettings {
 	activeTab: string;
 	deviceID: string;
+	serverPort: number;
 	controlDeviceID: string;
 	modelProviders: ModelProviderSettings[]
 	agents: AgentConfig[]
@@ -14,6 +15,7 @@ export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
 	deviceID: "",
 	controlDeviceID: "",
 	modelProviders: [],
+	serverPort: 2345,
 	agents: []
 }
 

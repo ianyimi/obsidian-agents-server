@@ -16,7 +16,6 @@ export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer
 		onSubmit: async ({ value }) => {
 			plugin.settings.modelProviders = value.modelProviders
 			await plugin.saveSettings()
-			new Notice("Settings Saved!")
 		}
 	})
 

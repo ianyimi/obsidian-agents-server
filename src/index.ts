@@ -1,6 +1,6 @@
 import "./styles.css"
 
-import { Plugin } from 'obsidian';
+import { Notice, Plugin } from 'obsidian';
 import { Agent } from "@openai/agents"
 
 import { AgentsServerSettings } from '~/settings';
@@ -13,26 +13,28 @@ import { aisdk } from "@openai/agents-extensions";
 import { Hono } from "hono";
 import { cors } from "hono/cors"
 import { DEFAULT_SETTINGS, ObsidianAgentsServerSettings } from "~/settings/types";
+import { serve, ServerType } from "@hono/node-server";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
 	isControlDevice: boolean = false;
 	modelProviders: ModelProvider[] = []
 	agents: Agent[]
-	server?: Hono
+	honoApp?: Hono
+	server?: ServerType
 
 	async onload() {
 		await this.loadSettings();
-		this.modelProviders = this.initializeModelProviders(this);
-		this.agents = this.initializeAgents(this)
-		this.initializeServer(this)
+		this.modelProviders = this.initializeModelProviders();
+		this.agents = this.initializeAgents()
+		this.initializeServer()
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new AgentsServerSettings({ app: this.app, plugin: this, modelProviders: this.modelProviders }));
 	}
 
 	onunload() {
-
+		this.stopServer()
 	}
 
 	async loadSettings() {
@@ -52,13 +54,16 @@ export default class ObsidianAgentsServer extends Plugin {
 		}
 	}
 
-	async saveSettings() {
+	async saveSettings(options?: { hideNotice: boolean }) {
 		await this.saveData(this.settings);
+		if (options?.hideNotice) return;
+		new Notice("Settings Saved!")
 	}
 
-	initializeAgents(plugin: ObsidianAgentsServer): Agent[] {
+	initializeAgents(): Agent[] {
 		const agents = []
-		for (const agent of plugin.settings.agents) {
+		for (const agent of this.settings.agents) {
+			if (!agent.enabled) continue
 			const modelProvider = this.modelProviders.find(mp => mp.id === agent.modelProvider)
 			if (!modelProvider?.instance) continue
 			const model = aisdk(modelProvider.instance(agent.model))
@@ -73,12 +78,12 @@ export default class ObsidianAgentsServer extends Plugin {
 		return agents
 	}
 
-	initializeModelProviders(plugin: ObsidianAgentsServer): ModelProvider[] {
+	initializeModelProviders(): ModelProvider[] {
 		const providers = []
-		for (const provider of plugin.settings.modelProviders) {
+		for (const provider of this.settings.modelProviders) {
 			switch (provider.id) {
 				case MODEL_PROVIDERS.lmstudio.id:
-					providers.push(new LMStudio(plugin))
+					providers.push(new LMStudio(this))
 					break;
 				default:
 					break;
@@ -87,14 +92,14 @@ export default class ObsidianAgentsServer extends Plugin {
 		return providers
 	}
 
-	initializeServer(plugin: ObsidianAgentsServer) {
+	initializeServer() {
 		const app = new Hono();
-		this.server = app;
+		this.honoApp = app;
 
 		app.use("/*", cors())
 
 		app.get("v1/models", (c) => {
-			const models = plugin.agents.map((agent) => ({
+			const models = this.agents.map((agent) => ({
 				id: agent.name,
 				object: "model",
 				created: Date.now(),
@@ -124,5 +129,25 @@ export default class ObsidianAgentsServer extends Plugin {
 			}
 		})
 
+		try {
+			this.server = serve({
+				fetch: app.fetch,
+				port: this.settings.serverPort
+			})
+		} catch (e) {
+			console.log('error starting server: ', e)
+		}
+	}
+
+	restartServer() {
+		this.stopServer();
+		this.initializeServer();
+		new Notice(`Server Restarted at http://localhost:${this.settings.serverPort}`)
+	}
+
+	stopServer() {
+		if (this.server) {
+			this.server.close()
+		}
 	}
 }

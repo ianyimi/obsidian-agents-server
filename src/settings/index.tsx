@@ -86,7 +86,7 @@ export class AgentsServerSettings extends PluginSettingTab {
 
 	handleTabChange = async (value: string): Promise<void> => {
 		this.plugin.settings.activeTab = value;
-		await this.plugin.saveSettings()
+		await this.plugin.saveSettings({ hideNotice: true })
 	}
 
 	hide(): void {

@@ -10,12 +10,17 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 	const form = useForm({
 		defaultValues: {
 			deviceID: plugin.settings.deviceID,
-			controlDeviceID: plugin.settings.controlDeviceID
+			controlDeviceID: plugin.settings.controlDeviceID,
+			serverPort: plugin.settings.serverPort
 		},
 		onSubmit: async ({ value }) => {
+			if (value.serverPort !== plugin.settings.serverPort) {
+				plugin.settings.serverPort = value.serverPort
+				plugin.restartServer()
+			}
 			plugin.settings.controlDeviceID = value.controlDeviceID
+			plugin.settings.serverPort = value.serverPort
 			await plugin.saveSettings()
-			new Notice("Settings Updated!")
 		}
 	})
 
@@ -26,7 +31,7 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 				e.stopPropagation()
 				form.handleSubmit()
 			}}
-			className="border border-blue-200 relative"
+			className="relative"
 		>
 			<Button type="submit" className="right-0 absolute">Save</Button>
 			<p className="text-center w-full">General Settings</p>
@@ -68,6 +73,24 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 								value={field.state.value}
 								onBlur={field.handleBlur}
 								onChange={(e) => field.handleChange(e.target.value)}
+							/>
+						</>
+					)
+				}}
+			/>
+			<form.Field
+				name="serverPort"
+				children={(field) => {
+					return (
+						<>
+							<Label htmlFor={field.name}>Server Port</Label>
+							<Input
+								id={field.name}
+								name={field.name}
+								type="number"
+								value={field.state.value}
+								onBlur={field.handleBlur}
+								onChange={(e) => field.handleChange(Number(e.target.value))}
 							/>
 						</>
 					)

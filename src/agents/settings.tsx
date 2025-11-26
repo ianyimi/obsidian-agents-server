@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { Trash } from "lucide-react";
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
-import { ModelProviderID } from "~/models/providers";
+import { ModelProviderID } from "~/models/providers/constants";
 import { Textarea } from "~/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectGroup, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Checkbox } from "~/components/ui/checkbox";
