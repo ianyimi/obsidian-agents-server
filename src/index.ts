@@ -33,8 +33,8 @@ export default class ObsidianAgentsServer extends Plugin {
 		this.addSettingTab(new AgentsServerSettings({ app: this.app, plugin: this, modelProviders: this.modelProviders }));
 	}
 
-	onunload() {
-		this.stopServer()
+	async onunload() {
+		await this.stopServer()
 	}
 
 	async loadSettings() {
@@ -93,6 +93,12 @@ export default class ObsidianAgentsServer extends Plugin {
 	}
 
 	initializeServer() {
+		// Skip if server is already running
+		if (this.server) {
+			console.log('Server already running on port', this.settings.serverPort);
+			return;
+		}
+
 		const app = new Hono();
 		this.honoApp = app;
 
@@ -134,20 +140,57 @@ export default class ObsidianAgentsServer extends Plugin {
 				fetch: app.fetch,
 				port: this.settings.serverPort
 			})
+
+			// Handle server errors
+			this.server.on?.('error', (err: NodeJS.ErrnoException) => {
+				if (err.code === 'EADDRINUSE') {
+					new Notice(`Port ${this.settings.serverPort} is already in use. Please choose a different port.`);
+					console.error(`Port ${this.settings.serverPort} is already in use`);
+					this.server = undefined;
+				} else {
+					console.error('Server error:', err);
+				}
+			});
+
+			this.server.on?.('listening', () => {
+				console.log(`Server started on port ${this.settings.serverPort}`);
+			});
 		} catch (e) {
 			console.log('error starting server: ', e)
+			new Notice('Failed to start server. Check console for details.');
 		}
 	}
 
-	restartServer() {
-		this.stopServer();
+	async restartServer() {
+		await this.stopServer();
+		// Small delay to ensure port is fully released by OS
+		await new Promise(resolve => setTimeout(resolve, 100));
 		this.initializeServer();
 		new Notice(`Server Restarted at http://localhost:${this.settings.serverPort}`)
 	}
 
-	stopServer() {
-		if (this.server) {
-			this.server.close()
+	async stopServer(): Promise<void> {
+		if (!this.server) {
+			return;
 		}
+
+		return new Promise<void>((resolve) => {
+			const timeout = setTimeout(() => {
+				console.warn('Server close timeout, forcing shutdown');
+				this.server = undefined;
+				resolve();
+			}, 5000);
+
+			this.server.close((err) => {
+				clearTimeout(timeout);
+				if (err) {
+					console.error('Error closing server:', err);
+				} else {
+					console.log('Server closed successfully');
+				}
+				this.server = undefined;
+				resolve();
+			});
+		});
 	}
 }

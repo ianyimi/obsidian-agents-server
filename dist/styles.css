@@ -853,6 +853,9 @@ video {
 .duration-300 {
   animation-duration: 300ms;
 }
+.running {
+  animation-play-state: running;
+}
 
 .file\:border-0::file-selector-button {
   border-width: 0px;
