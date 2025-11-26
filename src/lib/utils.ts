@@ -1,7 +1,7 @@
-import { AgentInputItem, RunResult } from "@openai/agents";
+import { AgentInputItem, RunResult, StreamedRunResult } from "@openai/agents";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { ChatCompletionMessage, CreateChatCompletionResponse, ChatCompletionChoice } from "~/agents/chatCompletionApiTypes";
+import { ChatCompletionMessage, CreateChatCompletionResponse, ChatCompletionChoice, ChatCompletionChunk } from "~/agents/chatCompletionApiTypes";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
@@ -116,4 +116,44 @@ export function convertRunResultToCompletion(
 	};
 
 	return response;
+}
+
+export async function* convertStreamToChunks(
+	stream: StreamedRunResult<any, any>,
+	model: string,
+): AsyncGenerator<ChatCompletionChunk> {
+	const id = `chatcmpl-${Date.now()}`;
+	const created = Math.floor(Date.now() / 1000);
+
+	for await (const event of stream) {
+		if (event.type === 'raw_model_stream_event' && event.data?.type === 'output_text_delta') {
+			yield {
+				id,
+				object: 'chat.completion.chunk',
+				created,
+				model,
+				choices: [{
+					index: 0,
+					delta: {
+						content: event.data.delta || '',
+					},
+					finish_reason: null,
+					logprobs: null,
+				}],
+			};
+		}
+	}
+
+	yield {
+		id,
+		object: 'chat.completion.chunk',
+		created,
+		model,
+		choices: [{
+			index: 0,
+			delta: {},
+			finish_reason: 'stop',
+			logprobs: null,
+		}],
+	};
 }

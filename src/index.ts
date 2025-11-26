@@ -12,10 +12,11 @@ import { aisdk } from "@openai/agents-extensions";
 
 import { Hono } from "hono";
 import { cors } from "hono/cors"
+import { streamSSE } from "hono/streaming"
 import { DEFAULT_SETTINGS, ObsidianAgentsServerSettings } from "~/settings/types";
 import { serve, ServerType } from "@hono/node-server";
 import { CreateChatCompletionBody } from "~/agents/chatCompletionApiTypes";
-import { convertMessagesToAgentInput, convertRunResultToCompletion } from "~/lib/utils";
+import { convertMessagesToAgentInput, convertRunResultToCompletion, convertStreamToChunks } from "~/lib/utils";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
@@ -140,12 +141,22 @@ export default class ObsidianAgentsServer extends Plugin {
 				const agentMessages = convertMessagesToAgentInput(messages);
 
 				if (stream) {
-					return c.json({
-						error: {
-							message: "Streaming not yet implemented",
-							type: "not_implemented_error"
+					const result = await run(agent, agentMessages, { stream: true });
+
+					return streamSSE(c, async (stream) => {
+						try {
+							for await (const chunk of convertStreamToChunks(result, model)) {
+								await stream.writeSSE({
+									data: JSON.stringify(chunk),
+								});
+							}
+							await stream.writeSSE({
+								data: '[DONE]',
+							});
+						} catch (streamErr) {
+							console.error('Stream error:', streamErr);
 						}
-					}, 501)
+					});
 				}
 
 				const result = await run(agent, agentMessages);

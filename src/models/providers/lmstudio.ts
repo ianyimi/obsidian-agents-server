@@ -33,7 +33,22 @@ export class LMStudio extends ModelProvider {
 	createInstance() {
 		this.instance = createOpenAICompatible({
 			name: this.id,
-			baseURL: this.baseURL
+			baseURL: this.baseURL,
+			fetch: async (url: string | URL | Request, init?: RequestInit) => {
+				const urlString = typeof url === 'string' ? url : url instanceof URL ? url.toString() : url.url;
+
+				const response = await requestUrl({
+					url: urlString,
+					method: init?.method || 'GET',
+					headers: init?.headers as Record<string, string>,
+					body: init?.body as string,
+				});
+
+				return new Response(response.text, {
+					status: response.status,
+					headers: response.headers,
+				});
+			}
 		})
 	}
 }
