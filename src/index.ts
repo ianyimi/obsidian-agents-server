@@ -1,7 +1,7 @@
 import "./styles.css"
 
 import { Notice, Plugin } from 'obsidian';
-import { Agent } from "@openai/agents"
+import { Agent, run } from "@openai/agents"
 
 import { AgentsServerSettings } from '~/settings';
 import { nanoid } from "nanoid";
@@ -14,6 +14,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors"
 import { DEFAULT_SETTINGS, ObsidianAgentsServerSettings } from "~/settings/types";
 import { serve, ServerType } from "@hono/node-server";
+import { CreateChatCompletionBody } from "~/agents/chatCompletionApiTypes";
+import { convertMessagesToAgentInput, convertRunResultToCompletion } from "~/lib/utils";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
@@ -120,11 +122,37 @@ export default class ObsidianAgentsServer extends Plugin {
 			})
 		})
 
-		app.get("v1/chat/completions", async (c) => {
+		app.post("v1/chat/completions", async (c) => {
 			try {
-				const body = await c.req.json()
-				// todo: implement chat completion and agent run logic here
-			} catch (err) {
+				const body = await c.req.json() as CreateChatCompletionBody
+				const { model, messages, stream = false } = body
+
+				const agent = this.agents.find(a => a.name === model)
+				if (!agent) {
+					return c.json({
+						error: {
+							message: `Model '${model}' not found. Available models: ${this.agents.map(a => a.name).join(', ')}`,
+							type: "invalid_request_error"
+						}
+					}, 404)
+				}
+
+				const agentMessages = convertMessagesToAgentInput(messages);
+
+				if (stream) {
+					return c.json({
+						error: {
+							message: "Streaming not yet implemented",
+							type: "not_implemented_error"
+						}
+					}, 501)
+				}
+
+				const result = await run(agent, agentMessages);
+				const response = convertRunResultToCompletion(result, model);
+				return c.json(response)
+
+			} catch (err: any) {
 				console.error('error handling chat completion: ', err)
 				return c.json({
 					error: {
@@ -175,6 +203,9 @@ export default class ObsidianAgentsServer extends Plugin {
 		}
 
 		return new Promise<void>((resolve) => {
+			if (!this.server) {
+				return;
+			}
 			const timeout = setTimeout(() => {
 				console.warn('Server close timeout, forcing shutdown');
 				this.server = undefined;
