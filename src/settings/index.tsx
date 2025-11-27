@@ -67,7 +67,7 @@ export class AgentsServerSettings extends PluginSettingTab {
 
 		this.root.render(
 			<StrictMode>
-				<div className="w-full h-full relative">
+				<div className="obsidian-agents-server-plugin w-full h-full relative">
 					<h1 className="pb-4 text-center text-2xl">Agents Server</h1>
 					<div className="flex flex-col items-center">
 						<Tabs defaultValue={this.plugin.settings.activeTab} className="w-full grid place-items-center" onValueChange={this.handleTabChange}>

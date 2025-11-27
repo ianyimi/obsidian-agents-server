@@ -2,7 +2,7 @@ import { useForm } from "@tanstack/react-form";
 import { Button } from "~/components/ui/button";
 import ObsidianAgentsServer from "~/index";
 import { Notice } from "obsidian";
-import { ModelProvider } from "~/providers";
+import { ModelProvider } from "~/models/providers";
 import { useEffect, useState } from "react";
 import { Trash } from "lucide-react";
 import { Label } from "~/components/ui/label";
@@ -11,6 +11,7 @@ import { ModelProviderID } from "~/models/providers/constants";
 import { Textarea } from "~/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectGroup, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Checkbox } from "~/components/ui/checkbox";
+import { nanoid } from "nanoid";
 
 export default function AgentsSettings({ plugin, modelProviders }: { plugin: ObsidianAgentsServer, modelProviders: ModelProvider[] }) {
 	const [models, setModels] = useState<{ id: string, provider: ModelProviderID }[]>([])
@@ -32,8 +33,16 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 			agents: plugin.settings.agents
 		},
 		onSubmit: async ({ value }) => {
+			let reloadServer = false
+			if (value.agents.length !== plugin.settings.agents.length) {
+				reloadServer = true
+			}
+
 			plugin.settings.agents = value.agents
 			await plugin.saveSettings()
+			if (reloadServer) {
+				await plugin.restartServer()
+			}
 			new Notice("Settings Updated!")
 		}
 	})
@@ -54,11 +63,16 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 					<div>
 						<Button type="button" onClick={() => {
 							field.pushValue({
+								id: nanoid(),
 								name: "",
 								instructions: "",
 								modelProvider: "" as ModelProviderID,
 								model: "",
-								enabled: true
+								enabled: true,
+								tool: {
+									enabled: false,
+									description: ""
+								}
 							})
 						}}>
 							Add Agent

@@ -1,5 +1,5 @@
 import { ModelProviderSettings } from "~/models/providers/constants";
-import { Agent as AgentConfig } from "~/agents/types";
+import { Agent as AgentSettings } from "~/agents/types";
 
 export interface ObsidianAgentsServerSettings {
 	activeTab: string;
@@ -7,7 +7,7 @@ export interface ObsidianAgentsServerSettings {
 	serverPort: number;
 	controlDeviceID: string;
 	modelProviders: ModelProviderSettings[]
-	agents: AgentConfig[]
+	agents: AgentSettings[]
 }
 
 export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
