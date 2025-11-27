@@ -1,7 +1,7 @@
 import "./styles.css"
 
 import { Notice, Plugin } from 'obsidian';
-import { Agent, run } from "@openai/agents"
+import { Agent, Runner } from "@openai/agents"
 
 import { AgentsServerSettings } from '~/settings';
 import { nanoid } from "nanoid";
@@ -23,6 +23,7 @@ export default class ObsidianAgentsServer extends Plugin {
 	isControlDevice: boolean = false;
 	modelProviders: ModelProvider[] = []
 	agents: Agent[]
+	runner: Runner = new Runner()
 	honoApp?: Hono
 	server?: ServerType
 
@@ -107,7 +108,7 @@ export default class ObsidianAgentsServer extends Plugin {
 
 		app.use("/*", cors())
 
-		app.get("v1/models", (c) => {
+		app.get("/v1/models", (c) => {
 			const models = this.agents.map((agent) => ({
 				id: agent.name,
 				object: "model",
@@ -123,7 +124,7 @@ export default class ObsidianAgentsServer extends Plugin {
 			})
 		})
 
-		app.post("v1/chat/completions", async (c) => {
+		app.post("/v1/chat/completions", async (c) => {
 			try {
 				const body = await c.req.json() as CreateChatCompletionBody
 				const { model, messages, stream = false } = body
@@ -141,7 +142,7 @@ export default class ObsidianAgentsServer extends Plugin {
 				const agentMessages = convertMessagesToAgentInput(messages);
 
 				if (stream) {
-					const result = await run(agent, agentMessages, { stream: true });
+					const result = await this.runner.run(agent, agentMessages, { stream: true });
 
 					return streamSSE(c, async (stream) => {
 						try {
@@ -159,7 +160,7 @@ export default class ObsidianAgentsServer extends Plugin {
 					});
 				}
 
-				const result = await run(agent, agentMessages);
+				const result = await this.runner.run(agent, agentMessages);
 				const response = convertRunResultToCompletion(result, model);
 				return c.json(response)
 
