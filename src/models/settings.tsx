@@ -1,15 +1,13 @@
-import { useForm, useStore } from "@tanstack/react-form";
+import { useStore } from "@tanstack/react-form";
 import ObsidianAgentsServer from "~/index";
-import { Label } from "~/components/ui/label";
-import { Input } from "~/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import { SelectGroup, SelectItem } from "~/components/ui/select";
 import { MODEL_PROVIDERS, ModelProviderID } from "~/models/providers/constants";
 import { Trash } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { Notice } from "obsidian";
+import { useAppForm } from "~/components/form";
 
 export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer }) {
-	const form = useForm({
+	const form = useAppForm({
 		defaultValues: {
 			modelProviders: plugin.settings.modelProviders
 		},
@@ -22,28 +20,18 @@ export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer
 	const modelProviders = useStore(form.store, (state) => state.values.modelProviders)
 
 	return (
-		<form
-			onSubmit={(e) => {
-				e.preventDefault()
-				e.stopPropagation()
-				form.handleSubmit()
-			}}
-			className="relative"
-		>
-			<Button type="submit" className="right-0 absolute top-0">Save</Button>
-			<h1 className="text-center pb-8">Model Settings</h1>
-			<form.Field name="modelProviders" mode="array">
-				{(field) => (
-					<div>
-						<Select onValueChange={(value) => {
-							const provider = MODEL_PROVIDERS[value as ModelProviderID]
-							field.pushValue({ id: value as ModelProviderID, label: provider.label, baseURL: provider.baseURL })
-							form.handleSubmit()
-						}}>
-							<SelectTrigger>
-								<SelectValue placeholder="Add a Provider" />
-							</SelectTrigger>
-							<SelectContent>
+		<form.AppForm>
+			<div className="relative">
+				<Button type="submit" className="right-0 absolute top-0">Save</Button>
+				<h1 className="text-center pb-8">Model Settings</h1>
+				<form.AppField name="modelProviders" mode="array">
+					{(field) => (
+						<div>
+							<field.SelectField onValueChange={(value) => {
+								const provider = MODEL_PROVIDERS[value as ModelProviderID]
+								field.pushValue({ id: value as ModelProviderID, label: provider.label, baseURL: provider.baseURL })
+								form.handleSubmit()
+							}}>
 								<SelectGroup>
 									{Object.values(MODEL_PROVIDERS)
 										.filter(p => !modelProviders.find(p2 => p2.id === p.id))
@@ -52,36 +40,28 @@ export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer
 										))
 									}
 								</SelectGroup>
-							</SelectContent>
-						</Select>
-						{field.state.value.map((provider, i) => (
-							<div key={i} className="relative py-2">
-								<h2>{provider.label}</h2>
-								<Trash size={16} onClick={() => {
-									field.removeValue(i)
-									form.handleSubmit()
-								}} className="absolute cursor-pointer right-4 top-2 hover:stroke-red-600 transition-colors duration-300" />
-								<form.Field name={`modelProviders[${i}].baseURL`}>
-									{(subField) => {
-										return (
-											<>
-												<Label htmlFor={subField.name}>Base URL</Label>
-												<Input
-													id={subField.name}
-													onBlur={subField.handleBlur}
-													value={subField.state.value}
-													onChange={(e) => subField.handleChange(e.target.value)}
-												/>
-											</>
-										)
-									}}
-								</form.Field>
-							</div>
-						))}
-					</div>
-				)}
-			</form.Field>
-		</form>
+							</field.SelectField>
+							{field.state.value.map((provider, i) => (
+								<div key={i} className="relative py-2">
+									<h2>{provider.label}</h2>
+									<Trash
+										size={16}
+										onClick={() => {
+											field.removeValue(i)
+											form.handleSubmit()
+										}}
+										className="absolute cursor-pointer right-4 top-2 hover:stroke-red-600 transition-colors duration-300"
+									/>
+									<form.AppField name={`modelProviders[${i}].baseURL`}>
+										{(subField) => <subField.TextField label="Base URL" />}
+									</form.AppField>
+								</div>
+							))}
+						</div>
+					)}
+				</form.AppField>
+			</div>
+		</form.AppForm>
 	)
 
 }
