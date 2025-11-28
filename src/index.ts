@@ -1,7 +1,7 @@
 import "./styles.css"
 
 import { Notice, Plugin } from 'obsidian';
-import { Agent, Runner } from "@openai/agents"
+import { Agent, Runner, Tool } from "@openai/agents"
 
 import { AgentsServerSettings } from '~/settings';
 import { nanoid } from "nanoid";
@@ -17,6 +17,7 @@ import { DEFAULT_SETTINGS, ObsidianAgentsServerSettings } from "~/settings/types
 import { serve, ServerType } from "@hono/node-server";
 import { CreateChatCompletionBody } from "~/agents/chatCompletionApiTypes";
 import { convertMessagesToAgentInput, convertRunResultToCompletion, convertStreamToChunks } from "~/lib/utils";
+import { createVaultTools } from "./tools/vault";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
@@ -26,11 +27,13 @@ export default class ObsidianAgentsServer extends Plugin {
 	runner: Runner = new Runner()
 	honoApp?: Hono
 	server?: ServerType
+	tools?: Tool[]
 
 	async onload() {
 		await this.loadSettings();
 		this.modelProviders = this.initializeModelProviders();
 		this.agents = this.initializeAgents()
+		this.tools = this.initializeTools()
 		this.initializeServer()
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -80,6 +83,11 @@ export default class ObsidianAgentsServer extends Plugin {
 			)
 		}
 		return agents
+	}
+
+	initializeTools(): Tool[] {
+		const tools = createVaultTools(this)
+		return tools
 	}
 
 	initializeModelProviders(): ModelProvider[] {

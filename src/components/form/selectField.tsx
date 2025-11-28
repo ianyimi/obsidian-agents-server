@@ -9,12 +9,14 @@ export function SelectField({
 	className,
 	label,
 	placeholder = "Select",
+	selectProps,
 	onValueChange,
 	...divProps
 }: {
 	label?: string,
 	placeholder?: string,
 	onValueChange?: (value: string) => void
+	selectProps?: Omit<ComponentPropsWithRef<"select">, "value" | "name" | "dir" | "defaultValue">
 } & ComponentPropsWithRef<"div">) {
 	const field = useFieldContext<string>()
 	return (
@@ -29,6 +31,7 @@ export function SelectField({
 						onValueChange(value)
 					}
 				}}
+				{...selectProps}
 			>
 				<SelectTrigger>
 					<SelectValue placeholder={placeholder} />

@@ -79,7 +79,7 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 										className="absolute cursor-pointer right-4 top-2 hover:stroke-red-600 transition-colors duration-300"
 									/>
 									<form.AppField name={`agents[${i}].enabled`}>
-										{(subField) => <subField.CheckboxField label="Enabled" />}
+										{(subField) => <subField.CheckboxField label="Enabled" orientation="horizontal" />}
 									</form.AppField>
 									<form.AppField name={`agents[${i}].name`}>
 										{(subField) => <subField.TextField label="Name" />}

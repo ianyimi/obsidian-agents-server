@@ -117,6 +117,11 @@
 @layer base {
   /* Scoped base styles */
   .obsidian-agents-server-plugin * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+  }
+
+  /* Ensure portal children can receive pointer events */
+  .obsidian-agents-server-plugin > * {
+    pointer-events: auto;
   }
 }

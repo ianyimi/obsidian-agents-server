@@ -501,8 +501,45 @@ video {
 }
   /* Scoped base styles */
   .obsidian-agents-server-plugin * {
-  border-color: hsl(var(--border));
-  outline-color: hsl(var(--ring) / 0.5);
+  border-color: var(--border);
+}
+
+  /* Ensure portal children can receive pointer events */
+  .obsidian-agents-server-plugin > * {
+    pointer-events: auto;
+  }
+.container {
+  width: 100%;
+}
+@media (min-width: 640px) {
+
+  .container {
+    max-width: 640px;
+  }
+}
+@media (min-width: 768px) {
+
+  .container {
+    max-width: 768px;
+  }
+}
+@media (min-width: 1024px) {
+
+  .container {
+    max-width: 1024px;
+  }
+}
+@media (min-width: 1280px) {
+
+  .container {
+    max-width: 1280px;
+  }
+}
+@media (min-width: 1536px) {
+
+  .container {
+    max-width: 1536px;
+  }
 }
 .fixed {
   position: fixed;
@@ -587,6 +624,9 @@ video {
 .min-h-\[60px\] {
   min-height: 60px;
 }
+.min-h-full {
+  min-height: 100%;
+}
 .w-3\.5 {
   width: 0.875rem;
 }
@@ -668,28 +708,28 @@ video {
   border-width: 1px;
 }
 .border-input {
-  border-color: hsl(var(--input));
+  border-color: var(--input);
 }
 .border-primary {
-  border-color: hsl(var(--primary));
+  border-color: var(--primary);
 }
 .bg-background {
-  background-color: hsl(var(--background));
+  background-color: var(--background);
 }
 .bg-destructive {
-  background-color: hsl(var(--destructive));
+  background-color: var(--destructive);
 }
 .bg-muted {
-  background-color: hsl(var(--muted));
+  background-color: var(--muted);
 }
 .bg-popover {
-  background-color: hsl(var(--popover));
+  background-color: var(--popover);
 }
 .bg-primary {
-  background-color: hsl(var(--primary));
+  background-color: var(--primary);
 }
 .bg-secondary {
-  background-color: hsl(var(--secondary));
+  background-color: var(--secondary);
 }
 .bg-transparent {
   background-color: transparent;
@@ -737,9 +777,6 @@ video {
 .pr-8 {
   padding-right: 2rem;
 }
-.pt-2 {
-  padding-top: 0.5rem;
-}
 .text-center {
   text-align: center;
 }
@@ -772,22 +809,22 @@ video {
   color: currentColor;
 }
 .text-destructive-foreground {
-  color: hsl(var(--destructive-foreground));
+  color: var(--destructive-foreground);
 }
 .text-muted-foreground {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 .text-popover-foreground {
-  color: hsl(var(--popover-foreground));
+  color: var(--popover-foreground);
 }
 .text-primary {
-  color: hsl(var(--primary));
+  color: var(--primary);
 }
 .text-primary-foreground {
-  color: hsl(var(--primary-foreground));
+  color: var(--primary-foreground);
 }
 .text-secondary-foreground {
-  color: hsl(var(--secondary-foreground));
+  color: var(--secondary-foreground);
 }
 .underline-offset-4 {
   text-underline-offset: 4px;
@@ -818,7 +855,7 @@ video {
   outline-style: solid;
 }
 .ring-offset-background {
-  --tw-ring-offset-color: hsl(var(--background));
+  --tw-ring-offset-color: var(--background);
 }
 .filter {
   filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow);
@@ -987,31 +1024,19 @@ video {
 }
 
 .file\:text-foreground::file-selector-button {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
 }
 
 .placeholder\:text-muted-foreground::-moz-placeholder {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .placeholder\:text-muted-foreground::placeholder {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .hover\:bg-accent:hover {
-  background-color: hsl(var(--accent));
-}
-
-.hover\:bg-destructive\/90:hover {
-  background-color: hsl(var(--destructive) / 0.9);
-}
-
-.hover\:bg-primary\/90:hover {
-  background-color: hsl(var(--primary) / 0.9);
-}
-
-.hover\:bg-secondary\/80:hover {
-  background-color: hsl(var(--secondary) / 0.8);
+  background-color: var(--accent);
 }
 
 .hover\:stroke-green-300:hover {
@@ -1023,7 +1048,7 @@ video {
 }
 
 .hover\:text-accent-foreground:hover {
-  color: hsl(var(--accent-foreground));
+  color: var(--accent-foreground);
 }
 
 .hover\:underline:hover {
@@ -1031,11 +1056,11 @@ video {
 }
 
 .focus\:bg-accent:focus {
-  background-color: hsl(var(--accent));
+  background-color: var(--accent);
 }
 
 .focus\:text-accent-foreground:focus {
-  color: hsl(var(--accent-foreground));
+  color: var(--accent-foreground);
 }
 
 .focus\:outline-none:focus {
@@ -1050,7 +1075,7 @@ video {
 }
 
 .focus\:ring-ring:focus {
-  --tw-ring-color: hsl(var(--ring));
+  --tw-ring-color: var(--ring);
 }
 
 .focus-visible\:outline-none:focus-visible {
@@ -1071,7 +1096,7 @@ video {
 }
 
 .focus-visible\:ring-ring:focus-visible {
-  --tw-ring-color: hsl(var(--ring));
+  --tw-ring-color: var(--ring);
 }
 
 .focus-visible\:ring-offset-2:focus-visible {
@@ -1122,24 +1147,40 @@ video {
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
+.data-\[state\=inactive\]\:border-none[data-state="inactive"] {
+  border-style: none;
+}
+
 .data-\[state\=checked\]\:bg-primary[data-state="checked"] {
-  background-color: hsl(var(--primary));
+  background-color: var(--primary);
 }
 
 .data-\[state\=inactive\]\:bg-background[data-state="inactive"] {
-  background-color: hsl(var(--background));
+  background-color: var(--background);
+}
+
+.data-\[state\=active\]\:bg-background[data-state="active"] {
+  background-color: var(--background);
+}
+
+.data-\[state\=inactive\]\:bg-transparent[data-state="inactive"] {
+  background-color: transparent;
 }
 
 .data-\[placeholder\]\:text-muted-foreground[data-placeholder] {
-  color: hsl(var(--muted-foreground));
+  color: var(--muted-foreground);
 }
 
 .data-\[state\=checked\]\:text-primary-foreground[data-state="checked"] {
-  color: hsl(var(--primary-foreground));
+  color: var(--primary-foreground);
 }
 
 .data-\[state\=inactive\]\:text-foreground[data-state="inactive"] {
-  color: hsl(var(--foreground));
+  color: var(--foreground);
+}
+
+.data-\[state\=active\]\:text-foreground[data-state="active"] {
+  color: var(--foreground);
 }
 
 .data-\[disabled\]\:opacity-50[data-disabled] {
@@ -1149,6 +1190,18 @@ video {
 .data-\[state\=inactive\]\:shadow[data-state="inactive"] {
   --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.data-\[state\=active\]\:shadow[data-state="active"] {
+  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+
+.data-\[state\=inactive\]\:shadow-none[data-state="inactive"] {
+  --tw-shadow: 0 0 #0000;
+  --tw-shadow-colored: 0 0 #0000;
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 

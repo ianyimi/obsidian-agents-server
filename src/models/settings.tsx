@@ -23,7 +23,7 @@ export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer
 		<form.AppForm>
 			<div className="relative">
 				<Button type="submit" className="right-0 absolute top-0">Save</Button>
-				<h1 className="text-center pb-8">Model Settings</h1>
+				<p className="text-center pb-8">Model Settings</p>
 				<form.AppField name="modelProviders" mode="array">
 					{(field) => (
 						<div>
