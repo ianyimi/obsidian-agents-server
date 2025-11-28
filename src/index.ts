@@ -4,6 +4,7 @@ import { Notice, Plugin } from 'obsidian';
 import { Agent, Runner, Tool } from "@openai/agents"
 
 import { AgentsServerSettings } from '~/settings';
+import { AgentSettings } from "~/agents/types"
 import { nanoid } from "nanoid";
 import { MODEL_PROVIDERS } from "~/models/providers/constants";
 import { ModelProvider } from "~/models/providers";
@@ -17,7 +18,9 @@ import { DEFAULT_SETTINGS, ObsidianAgentsServerSettings } from "~/settings/types
 import { serve, ServerType } from "@hono/node-server";
 import { CreateChatCompletionBody } from "~/agents/chatCompletionApiTypes";
 import { convertMessagesToAgentInput, convertRunResultToCompletion, convertStreamToChunks } from "~/lib/utils";
-import { createVaultTools } from "./tools/vault";
+import { createVaultTools } from "~/tools/vault";
+import { AgentTool } from "~/tools/types";
+import { templaterApi } from "./tools/plugin-utils";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
@@ -27,13 +30,13 @@ export default class ObsidianAgentsServer extends Plugin {
 	runner: Runner = new Runner()
 	honoApp?: Hono
 	server?: ServerType
-	tools?: Tool[]
+	tools: AgentTool[] = []
 
 	async onload() {
 		await this.loadSettings();
 		this.modelProviders = this.initializeModelProviders();
-		this.agents = this.initializeAgents()
 		this.tools = this.initializeTools()
+		this.agents = this.initializeAgents()
 		this.initializeServer()
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -74,19 +77,39 @@ export default class ObsidianAgentsServer extends Plugin {
 			const modelProvider = this.modelProviders.find(mp => mp.id === agent.modelProvider)
 			if (!modelProvider?.instance) continue
 			const model = aisdk(modelProvider.instance(agent.model))
+			const tools = this.getAgentTools(agent)
 			agents.push(
 				new Agent({
 					name: agent.name,
 					instructions: agent.instructions,
 					model,
+					tools
 				})
 			)
 		}
 		return agents
 	}
 
-	initializeTools(): Tool[] {
+	initializeTools(): AgentTool[] {
 		const tools = createVaultTools(this)
+		return tools
+	}
+
+	getAgentTools(agent: AgentSettings): Tool[] {
+		const tools: Tool[] = []
+		for (const tool of agent.tools.filter(t => t.enabled)) {
+			switch (tool.type.id) {
+				case "vault":
+					this.tools.forEach(t => {
+						if (t.type.id === "vault") {
+							tools.push(t.tool)
+						}
+					})
+					break;
+				default:
+					break;
+			}
+		}
 		return tools
 	}
 

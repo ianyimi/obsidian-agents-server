@@ -1,20 +1,34 @@
-import { z, ZodNull } from "zod"
+import { z } from "zod"
+import { type Tool } from "@openai/agents"
 
-export const TFolderSchema = z.object({
-	name: z.string(),
-	parent: z.union(TFolderSchema, ZodNull)
+export const TOOL_TYPES = {
+	null: {
+		id: "",
+		label: ""
+	},
+	vault: {
+		id: "vault",
+		label: "Vault Tools"
+	},
+} as const
+export type ToolType = typeof TOOL_TYPES[keyof typeof TOOL_TYPES]
+
+export const SUPPORTED_PLUGINS = {
+	templater: {
+		id: "templater-obsidian",
+		label: "Templater"
+	}
+} as const
+export type SupportedPlugin = typeof SUPPORTED_PLUGINS[keyof typeof SUPPORTED_PLUGINS]
+export type SupportedPluginIDs = typeof SUPPORTED_PLUGINS[keyof typeof SUPPORTED_PLUGINS]["id"]
+
+export interface AgentTool {
+	type: ToolType,
+	tool: Tool
+	plugins: SupportedPluginIDs[]
+}
+
+export const ModifyFileOptionsSchema = z.object({
+	ctime: z.number().nullable().default(null),
+	mtime: z.number().nullable().default(null)
 })
-
-export const FileStatsSchema = z.object({
-})
-
-export const TFileSchema = z.object({
-	basename: z.string(),
-	extension: z.string(),
-	name: z.string(),
-	parent: TFolderSchema,
-	path: z.string(),
-	stat: FileStatsSchema,
-})
-
-// export const TAbstractFileSchema = z.union(TFileSchema, TFolderSchema)

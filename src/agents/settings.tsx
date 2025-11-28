@@ -8,6 +8,7 @@ import { ModelProviderID } from "~/models/providers/constants";
 import { SelectGroup, SelectItem } from "~/components/ui/select";
 import { useAppForm } from "~/components/form"
 import { nanoid } from "nanoid";
+import { TOOL_TYPES } from "~/tools/types";
 
 export default function AgentsSettings({ plugin, modelProviders }: { plugin: ObsidianAgentsServer, modelProviders: ModelProvider[] }) {
 	const [models, setModels] = useState<{ id: string, provider: ModelProviderID }[]>([])
@@ -29,6 +30,7 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 			agents: plugin.settings.agents
 		},
 		onSubmit: async ({ value }) => {
+			console.log('value: ', value)
 			let reloadServer = false
 			if (value.agents.length !== plugin.settings.agents.length) {
 				reloadServer = true
@@ -46,7 +48,7 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 	return (
 		<form.AppForm>
 			<div className="relative">
-				<Button type="submit" className="right-0 absolute">Save</Button>
+				<Button type="submit" onClick={form.handleSubmit} className="right-0 absolute">Save</Button>
 				<p className="text-center w-full">Agents Settings</p>
 				<form.Field name="agents" mode="array">
 					{(field) => (
@@ -59,15 +61,12 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 									modelProvider: "" as ModelProviderID,
 									model: "",
 									enabled: true,
-									tool: {
-										enabled: false,
-										description: ""
-									}
+									tools: []
 								})
 							}}>
 								Add Agent
 							</Button>
-							{field.state.value.map((agent, i) => (
+							{field.state.value?.map((agent, i) => (
 								<div key={i} className="relative py-2 flex flex-col gap-2">
 									<h2>Agent #{i + 1}</h2>
 									<Trash
@@ -105,6 +104,56 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 										)
 										}
 									</form.AppField>
+									<form.Field name={`agents[${i}].tools`} mode="array">
+										{(agentTools) => (
+											<div className="relative">
+												<h2>Tools</h2>
+												<div className="grid place-items-center">
+													<Button
+														type="button"
+														onClick={() => {
+															agentTools.pushValue({
+																type: { id: "", label: "" },
+																enabled: true,
+																description: ""
+															})
+														}}
+													>
+														Add Tool
+													</Button>
+												</div>
+												<div className="flex flex-col gap-4">
+													{agentTools.state.value?.map((tool, j) => (
+														<div key={j} className="flex-col relative flex gap-2">
+															<h4>Tool #{j + 1}</h4>
+															<Trash
+																size={16}
+																onClick={() => {
+																	agentTools.removeValue(j)
+																	form.handleSubmit()
+																}}
+																className="absolute cursor-pointer right-4 top-0 hover:stroke-red-600 transition-colors duration-300"
+															/>
+															<form.AppField name={`agents[${i}].tools[${j}].enabled`}>
+																{(subField) => <subField.CheckboxField label="Enabled" orientation="horizontal" />}
+															</form.AppField>
+															<form.AppField name={`agents[${i}].tools[${j}].type`}>
+																{(subField) => (
+																	<subField.SelectField label="Type" placeholder="Select Tool Type">
+																		<SelectGroup>
+																			{Object.values(TOOL_TYPES).filter(t => t.id !== "").map((tool, k) => (
+																				<SelectItem key={k} value={tool.id}>{tool.label}</SelectItem>
+																			))}
+																		</SelectGroup>
+																	</subField.SelectField>
+																)}
+															</form.AppField>
+														</div>
+													))}
+												</div>
+											</div>
+										)}
+									</form.Field>
 								</div>
 							))}
 						</div>

@@ -1,5 +1,5 @@
 import { ModelProviderSettings } from "~/models/providers/constants";
-import { Agent as AgentSettings } from "~/agents/types";
+import { AgentSettings } from "~/agents/types";
 
 export interface ObsidianAgentsServerSettings {
 	activeTab: string;
