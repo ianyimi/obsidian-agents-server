@@ -2,6 +2,7 @@ import { AgentInputItem, RunResult, StreamedRunResult } from "@openai/agents";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { ChatCompletionMessage, CreateChatCompletionResponse, ChatCompletionChoice, ChatCompletionChunk } from "~/agents/chatCompletionApiTypes";
+import { VAULT_TOOLS } from "~/tools/vault";
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
@@ -126,6 +127,7 @@ export async function* convertStreamToChunks(
 	const created = Math.floor(Date.now() / 1000);
 
 	for await (const event of stream) {
+		// Handle text deltas from model
 		if (event.type === 'raw_model_stream_event' && event.data?.type === 'output_text_delta') {
 			yield {
 				id,
@@ -141,6 +143,50 @@ export async function* convertStreamToChunks(
 					logprobs: null,
 				}],
 			};
+		}
+		// Handle SDK execution events (tool calls, handoffs, etc.)
+		else if (event.type === 'run_item_stream_event') {
+			const runEvent = event as any;
+
+			// Tool call initiated
+			if (runEvent.name === 'tool_called' && runEvent.item?.type === 'tool_call_item') {
+				const funcName = runEvent.item.rawItem?.name || 'unknown';
+				const toolLabel = Object.values(VAULT_TOOLS).find(vt => vt.id === funcName)
+				yield {
+					id,
+					object: 'chat.completion.chunk',
+					created,
+					model,
+					choices: [{
+						index: 0,
+						delta: {
+							content: `\n[Tool Call]: ${toolLabel ? toolLabel.label : funcName}\n`,
+						},
+						finish_reason: null,
+						logprobs: null,
+					}],
+				};
+			}
+
+			// Tool output received
+			else if (runEvent.name === 'tool_output' && runEvent.item?.type === 'tool_call_output_item') {
+				const funcName = runEvent.item.rawItem?.name || 'unknown';
+				const toolLabel = Object.values(VAULT_TOOLS).find(vt => vt.id === funcName)
+				yield {
+					id,
+					object: 'chat.completion.chunk',
+					created,
+					model,
+					choices: [{
+						index: 0,
+						delta: {
+							content: `[Tool Complete]: ${toolLabel ? toolLabel.label : funcName}\n`,
+						},
+						finish_reason: null,
+						logprobs: null,
+					}],
+				};
+			}
 		}
 	}
 
