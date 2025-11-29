@@ -9,9 +9,11 @@ import { SelectGroup, SelectItem } from "~/components/ui/select";
 import { useAppForm } from "~/components/form"
 import { nanoid } from "nanoid";
 import { TOOL_TYPES } from "~/tools/types";
+import { VAULT_TOOLS, VaultToolsID } from "~/tools/vault";
 
 export default function AgentsSettings({ plugin, modelProviders }: { plugin: ObsidianAgentsServer, modelProviders: ModelProvider[] }) {
 	const [models, setModels] = useState<{ id: string, provider: ModelProviderID }[]>([])
+	const vaultToolsArray = Object.values(VAULT_TOOLS).map(t => t.id)
 
 	useEffect(() => {
 		const allModels: { id: string, provider: ModelProviderID }[] = []
@@ -30,7 +32,6 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 			agents: plugin.settings.agents
 		},
 		onSubmit: async ({ value }) => {
-			console.log('value: ', value)
 			let reloadServer = false
 			if (value.agents.length !== plugin.settings.agents.length) {
 				reloadServer = true
@@ -61,6 +62,13 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 									modelProvider: "" as ModelProviderID,
 									model: "",
 									enabled: true,
+									vaultTools: Object.values(VAULT_TOOLS).reduce(
+										(acc, tool) => {
+											acc[tool.id] = false;
+											return acc
+										},
+										{} as Record<VaultToolsID, boolean>
+									),
 									tools: []
 								})
 							}}>
@@ -101,14 +109,26 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 													))}
 												</SelectGroup>
 											</subField.SelectField>
-										)
-										}
+										)}
 									</form.AppField>
+									<div className="py-6">
+										<h2>Vault Tools</h2>
+										<div className="flex flex-wrap gap-8">
+											{vaultToolsArray.map((t, j) => {
+												const tool = Object.values(VAULT_TOOLS).find(vt => vt.id === t)!
+												return (
+													<form.AppField name={`agents[${i}].vaultTools.${t}`} key={j}>
+														{(subField) => <subField.CheckboxField label={tool.label} orientation="horizontal" />}
+													</form.AppField>
+												)
+											})}
+										</div>
+									</div>
 									<form.Field name={`agents[${i}].tools`} mode="array">
 										{(agentTools) => (
 											<div className="relative">
-												<h2>Tools</h2>
-												<div className="grid place-items-center">
+												<h2>User Tools</h2>
+												<div className="grid place-items-center pb-4">
 													<Button
 														type="button"
 														onClick={() => {
@@ -139,13 +159,19 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 															</form.AppField>
 															<form.AppField name={`agents[${i}].tools[${j}].type`}>
 																{(subField) => (
-																	<subField.SelectField label="Type" placeholder="Select Tool Type">
-																		<SelectGroup>
-																			{Object.values(TOOL_TYPES).filter(t => t.id !== "").map((tool, k) => (
-																				<SelectItem key={k} value={tool.id}>{tool.label}</SelectItem>
-																			))}
-																		</SelectGroup>
-																	</subField.SelectField>
+																	<div>
+																		{/* <subField.MultiSelectField label="Type" placeholder="Select Tool Type"> */}
+																		{/* <MultiSelectGroup> */}
+																		{/* </MultiSelectGroup> */}
+																		{/* </subField.MultiSelectField> */}
+																		<subField.SelectField label="Type" placeholder="Select Tool Type">
+																			<SelectGroup>
+																				{Object.values(TOOL_TYPES).filter(t => t.id !== "").map((tool, k) => (
+																					<SelectItem key={k} value={tool.id}>{tool.label}</SelectItem>
+																				))}
+																			</SelectGroup>
+																		</subField.SelectField>
+																	</div>
 																)}
 															</form.AppField>
 														</div>

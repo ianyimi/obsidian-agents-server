@@ -3,6 +3,7 @@ import { TextField } from "./textField";
 import { CheckboxField } from "./checkboxField";
 import { TextareaField } from "./textareaField";
 import { SelectField } from "./selectField";
+import { MultiSelectField } from "./multiSelectField";
 
 export const { fieldContext, formContext, useFieldContext } = createFormHookContexts()
 
@@ -13,6 +14,7 @@ export const { useAppForm, withForm } = createFormHook({
 		TextField,
 		TextareaField,
 		SelectField,
+		MultiSelectField,
 		CheckboxField
 	},
 	formComponents: {}

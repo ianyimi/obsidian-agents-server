@@ -78,6 +78,7 @@ export default class ObsidianAgentsServer extends Plugin {
 			if (!modelProvider?.instance) continue
 			const model = aisdk(modelProvider.instance(agent.model))
 			const tools = this.getAgentTools(agent)
+			console.log('agent tools: ', tools)
 			agents.push(
 				new Agent({
 					name: agent.name,
@@ -97,19 +98,22 @@ export default class ObsidianAgentsServer extends Plugin {
 
 	getAgentTools(agent: AgentSettings): Tool[] {
 		const tools: Tool[] = []
-		for (const tool of agent.tools.filter(t => t.enabled)) {
-			switch (tool.type.id) {
-				case "vault":
-					this.tools.forEach(t => {
-						if (t.type.id === "vault") {
-							tools.push(t.tool)
-						}
-					})
-					break;
-				default:
-					break;
+		const agentVaultTools = Object.entries(agent.vaultTools).filter(([_key, value]) => value === true).map(([key, _value]) => key)
+		if (agentVaultTools.length > 0) {
+			const vaultTools = createVaultTools(this)
+			for (const vaultTool of vaultTools) {
+				if (agentVaultTools.includes(vaultTool.id)) {
+					tools.push(vaultTool.tool)
+				}
 			}
 		}
+		// Custom Tools
+		// for (const tool of agent.tools.filter(t => t.enabled)) {
+		// 	switch (tool.type.id) {
+		// 		default:
+		// 			break;
+		// 	}
+		// }
 		return tools
 	}
 

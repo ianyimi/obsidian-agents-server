@@ -23,6 +23,7 @@ export type SupportedPlugin = typeof SUPPORTED_PLUGINS[keyof typeof SUPPORTED_PL
 export type SupportedPluginIDs = typeof SUPPORTED_PLUGINS[keyof typeof SUPPORTED_PLUGINS]["id"]
 
 export interface AgentTool {
+	id: string,
 	type: ToolType,
 	tool: Tool
 	plugins: SupportedPluginIDs[]
