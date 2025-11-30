@@ -28,7 +28,6 @@ export class MCPManager {
 				console.error(`[MCP] Failed to connect to ${config.name}: `, err)
 			}
 		}
-		console.log(`${this.servers.size} servers initialized...`)
 	}
 
 	private convertStdioArgs(args: string) {

@@ -55,7 +55,6 @@ function findNodeExecutable(command: "node" | "npx"): string | null {
 			for (const version of versions) {
 				const binPath = join(fnmPath, version, "installation/bin", command)
 				if (existsSync(binPath)) {
-					console.log(`[MCP] Found ${command} at: ${binPath}`)
 					return binPath
 				}
 			}
@@ -75,7 +74,6 @@ function findNodeExecutable(command: "node" | "npx"): string | null {
 			for (const version of versions) {
 				const binPath = join(nvmPath, version, "bin", command)
 				if (existsSync(binPath)) {
-					console.log(`[MCP] Found ${command} at: ${binPath}`)
 					return binPath
 				}
 			}
@@ -119,34 +117,19 @@ export class SimpleMCPServerStdio {
 			// Add command directory to PATH if not already present
 			if (!currentPath.split(':').includes(commandDir)) {
 				mergedEnv.PATH = `${commandDir}:${currentPath}`
-				console.log(`[MCP] Added to PATH: ${commandDir}`)
 			}
 		}
-
-		console.log(`[MCP] Connecting to ${this.config.name}`)
-		console.log(`[MCP] Command: ${this.config.command} -> ${resolvedCommand}`)
-		console.log(`[MCP] Args:`, this.config.args)
-		console.log(`[MCP] Custom env keys:`, Object.keys(this.config.env || {}))
 
 		this.transport = new StdioClientTransport({
 			command: resolvedCommand,
 			args: this.config.args || [],
-			env: mergedEnv,
-			stderr: 'pipe'
+			env: mergedEnv
 		})
 
 		this.client = new Client(
 			{ name: 'obsidian-agents-server', version: '1.0.0' },
 			{ capabilities: {} }
 		)
-
-		// Set up stderr logging before connecting
-		const transportAny = this.transport as any
-		if (transportAny._stderrStream) {
-			transportAny._stderrStream.on('data', (data: Buffer) => {
-				console.log(`[MCP ${this.config.name}] stderr:`, data.toString())
-			})
-		}
 
 		try {
 			await this.client.connect(this.transport)

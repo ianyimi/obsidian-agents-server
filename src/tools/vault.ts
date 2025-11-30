@@ -53,7 +53,6 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
 				parameters: z.object({}),
 				async execute() {
 					const files = plugin.app.vault.getMarkdownFiles()
-					console.log(`[get_files] Found ${files.length} markdown files`)
 					return files.length
 				}
 			})
