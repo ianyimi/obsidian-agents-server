@@ -1,5 +1,5 @@
 export default {
-	darkMode: ["class"],
+	darkMode: ["class", ".theme-dark"],
 	content: [
 		"./src/**/*.{js,jsx,ts,tsx}"
 	],

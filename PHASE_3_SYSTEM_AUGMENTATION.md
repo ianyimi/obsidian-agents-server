@@ -162,6 +162,93 @@
 - Workspace awareness (what user is working on)
 - Time-based context (morning vs evening behaviors)
 
+#### Conversation Context Length Management
+**Problem:** Large conversations exceed model context windows, causing:
+- Context truncation (LMStudio TruncateMiddle removes middle tokens)
+- Lost tool results and important context
+- Model hallucinations due to incomplete information
+- Poor responses when context is cut
+
+**Solutions by Phase:**
+
+**Phase 3.1: Error Detection & Reporting**
+- Detect context length errors from providers (400 errors, "context exceeded")
+- Return structured errors with context usage stats
+- Show helpful errors in OWUI ("Context full, clear conversation")
+- Add context usage % in response headers
+
+**Phase 3.2: Context Monitoring**
+- Provider-specific `getContextLimit()` method
+- Estimate token count (rough: `JSON.stringify(messages).length / 4`)
+- Show warning in OWUI at 80% capacity
+- Display current context usage in chat UI
+
+**Phase 3.3: Auto-Compaction Strategies**
+
+*Strategy A: Simple Truncation*
+- Remove oldest messages when approaching limit
+- Keep system prompt + last N messages
+- Notify user when compaction occurs
+- Pros: Fast, simple | Cons: Loses context
+
+*Strategy B: Smart Pruning*
+- Priority-based removal:
+  1. Keep: System prompt, recent messages, tool results
+  2. Remove: Old assistant responses, redundant messages
+  3. Compress: Long tool outputs (first/last 500 chars)
+- Pros: Preserves important context | Cons: More complex
+
+*Strategy C: Summarization (Claude Code approach)*
+- At 70-80% capacity, send history to cheap model
+- Get summary of conversation
+- Replace old messages with summary
+- Pros: Maintains continuity | Cons: Extra API call, quality varies
+
+*Strategy D: Sliding Window with Anchors*
+- Always keep: System prompt + last N messages
+- Dynamically compress middle based on importance
+- Pros: Best balance | Cons: Most complex
+
+**Implementation Architecture:**
+```typescript
+// Shared logic
+class ContextManager {
+  countTokens(messages): number
+  shouldCompact(messages, maxTokens): boolean
+  compact(messages, strategy): Message[]
+  getContextUsage(messages, maxTokens): { used: number, total: number, percentage: number }
+}
+
+// Provider-specific
+class ModelProvider {
+  getContextLimit(): number
+  getTokenCount(messages): Promise<number>
+  handleContextError(error): boolean
+  compactionStrategy: 'truncate' | 'summarize' | 'smart'
+}
+
+// Server middleware
+POST /v1/chat/completions {
+  - Catch context errors
+  - Attempt auto-compaction
+  - Return helpful error to client
+  - Include usage % in headers
+}
+```
+
+**User Controls:**
+- Per-agent compaction strategy setting
+- Context limit override (for providers with adjustable limits)
+- Auto-compact threshold (default 80%)
+- Option to disable auto-compaction
+- Manual "compact now" button in UI
+
+**Metrics to Track:**
+- Compaction frequency per agent
+- Context usage distribution
+- Error rate before/after compaction
+- User satisfaction with compacted conversations
+
 ---
 
 ### External Integrations

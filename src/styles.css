@@ -79,6 +79,8 @@
 }
 
 /* Dark mode - scoped to plugin */
+/* Support both Obsidian's .theme-dark and standard .dark class */
+.theme-dark .obsidian-agents-server-plugin,
 .dark .obsidian-agents-server-plugin {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

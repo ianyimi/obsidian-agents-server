@@ -20,7 +20,7 @@ import { CreateChatCompletionBody } from "~/agents/chatCompletionApiTypes";
 import { convertMessagesToAgentInput, convertRunResultToCompletion, convertStreamToChunks } from "~/lib/utils";
 import { createVaultTools } from "~/tools/vault";
 import { AgentTool } from "~/tools/types";
-import { templaterApi } from "./tools/plugin-utils";
+import { MCPManager } from "./mcp";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
@@ -31,12 +31,18 @@ export default class ObsidianAgentsServer extends Plugin {
 	honoApp?: Hono
 	server?: ServerType
 	tools: AgentTool[] = []
+	mcpManager: MCPManager
 
 	async onload() {
 		await this.loadSettings();
 		this.modelProviders = this.initializeModelProviders();
+
 		this.tools = this.initializeTools()
-		this.agents = this.initializeAgents()
+
+		this.mcpManager = new MCPManager(this)
+		await this.mcpManager.initializeServers()
+
+		this.agents = await this.initializeAgents()
 		this.initializeServer()
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -44,6 +50,7 @@ export default class ObsidianAgentsServer extends Plugin {
 	}
 
 	async onunload() {
+		await this.mcpManager.closeAll()
 		await this.stopServer()
 	}
 
@@ -70,14 +77,14 @@ export default class ObsidianAgentsServer extends Plugin {
 		new Notice("Settings Saved!")
 	}
 
-	initializeAgents(): Agent[] {
+	async initializeAgents(): Promise<Agent[]> {
 		const agents = []
 		for (const agent of this.settings.agents) {
 			if (!agent.enabled) continue
 			const modelProvider = this.modelProviders.find(mp => mp.id === agent.modelProvider)
 			if (!modelProvider?.instance) continue
 			const model = aisdk(modelProvider.instance(agent.model))
-			const tools = this.getAgentTools(agent)
+			const tools = await this.getAgentTools(agent)
 			console.log('agent tools: ', tools)
 			agents.push(
 				new Agent({
@@ -96,7 +103,7 @@ export default class ObsidianAgentsServer extends Plugin {
 		return tools
 	}
 
-	getAgentTools(agent: AgentSettings): Tool[] {
+	async getAgentTools(agent: AgentSettings): Promise<Tool[]> {
 		const tools: Tool[] = []
 		const agentVaultTools = Object.entries(agent.vaultTools).filter(([_key, value]) => value === true).map(([key, _value]) => key)
 		if (agentVaultTools.length > 0) {
@@ -107,6 +114,9 @@ export default class ObsidianAgentsServer extends Plugin {
 				}
 			}
 		}
+
+		const mcpTools = await this.mcpManager.getToolsForAgent(agent)
+		tools.push(...mcpTools)
 		// Custom Tools
 		// for (const tool of agent.tools.filter(t => t.enabled)) {
 		// 	switch (tool.type.id) {

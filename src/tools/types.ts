@@ -10,6 +10,14 @@ export const TOOL_TYPES = {
 		id: "vault",
 		label: "Vault Tools"
 	},
+	mcp: {
+		id: "mcp",
+		label: "MCP Server"
+	},
+	custom: {
+		id: "custom",
+		label: "Custom Function"
+	}
 } as const
 export type ToolType = typeof TOOL_TYPES[keyof typeof TOOL_TYPES]
 

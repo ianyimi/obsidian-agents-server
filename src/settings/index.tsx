@@ -8,6 +8,7 @@ import AgentsSettings from "~/agents/settings";
 import ModelSettings from "../models/settings"
 import GeneralSettings from "./general";
 import { ModelProvider } from "~/models/providers";
+import MCPServerSettings from "~/mcp/settings";
 
 interface SettingsTab {
 	valueID: string
@@ -33,6 +34,11 @@ export class AgentsServerSettings extends PluginSettingTab {
 			valueID: "models",
 			triggerLabel: "Models",
 			content: "Loading..."
+		},
+		{
+			valueID: "mcp",
+			triggerLabel: "MCP Servers",
+			content: "Loading..."
 		}
 	]
 
@@ -54,6 +60,11 @@ export class AgentsServerSettings extends PluginSettingTab {
 				valueID: "models",
 				triggerLabel: "Models",
 				content: <ModelSettings plugin={this.plugin} />
+			},
+			{
+				valueID: "mcp",
+				triggerLabel: "MCP Servers",
+				content: <MCPServerSettings plugin={this.plugin} />
 			}
 		];
 	}

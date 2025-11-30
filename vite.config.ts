@@ -44,6 +44,10 @@ export default defineConfig(async ({ mode }) => {
 			alias: {
 				"~": path.resolve(__dirname, "./src"),
 			},
+			conditions: ['node', 'require'],
+		},
+		optimizeDeps: {
+			exclude: ['@modelcontextprotocol/sdk']
 		},
 		build: {
 			lib: {
@@ -80,6 +84,15 @@ export default defineConfig(async ({ mode }) => {
 					"@lezer/highlight",
 					"@lezer/lr",
 					...builtins,
+					// Node.js built-ins used by MCP SDK
+					"node:process",
+					"node:stream",
+					"node:events",
+					"node:crypto",
+					"node:stream/web",
+					"node:async_hooks",
+					"node:timers",
+					"child_process",
 				],
 			},
 		},

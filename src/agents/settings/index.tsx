@@ -69,6 +69,7 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 										},
 										{} as Record<VaultToolsID, boolean>
 									),
+									mcpTools: [],
 									tools: []
 								})
 							}}>
@@ -124,6 +125,7 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 											})}
 										</div>
 									</div>
+									{/* TODO: add multiselect for mcp tools inputs here */}
 									<form.Field name={`agents[${i}].tools`} mode="array">
 										{(agentTools) => (
 											<div className="relative">
@@ -135,7 +137,6 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 															agentTools.pushValue({
 																type: { id: "", label: "" },
 																enabled: true,
-																description: ""
 															})
 														}}
 													>
@@ -166,7 +167,7 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 																		{/* </subField.MultiSelectField> */}
 																		<subField.SelectField label="Type" placeholder="Select Tool Type">
 																			<SelectGroup>
-																				{Object.values(TOOL_TYPES).filter(t => t.id !== "").map((tool, k) => (
+																				{Object.values(TOOL_TYPES).filter(t => t.id !== "" && t.id !== "vault").map((tool, k) => (
 																					<SelectItem key={k} value={tool.id}>{tool.label}</SelectItem>
 																				))}
 																			</SelectGroup>

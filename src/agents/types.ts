@@ -10,9 +10,20 @@ export interface AgentSettings {
 	modelProvider: ModelProviderID
 	model: string
 	vaultTools: Record<VaultToolsID, boolean>
+	mcpTools: {
+		enabled: boolean,
+		type: Extract<ToolType, { id: "mcp" }>
+		serverID: string,
+		toolIDs: string[]
+	}[],
 	tools: {
-		enabled: boolean;
-		type: ToolType;
-		description?: string;
+		enabled: boolean,
+		type: ToolType,
+		description?: string,
+
+		mcpServerID?: string,
+		mcpToolIDs?: string[]
+
+		customToolPath?: string
 	}[]
 }
