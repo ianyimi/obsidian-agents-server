@@ -82,16 +82,16 @@ export class MCPManager {
 	async getToolsForAgent(agentSettings: AgentSettings): Promise<Tool[]> {
 		const tools: Tool[] = []
 
-		for (const toolConfig of agentSettings.tools) {
+		for (const toolConfig of agentSettings.mcpTools) {
 			if (!toolConfig.enabled || toolConfig.type.id !== "mcp") continue;
-			if (!toolConfig.mcpServerID) {
+			if (!toolConfig.serverID) {
 				console.warn(`[MCP] Tool config missing mcpServerID`)
 				continue
 			}
 
-			const server = this.servers.get(toolConfig.mcpServerID)
+			const server = this.servers.get(toolConfig.serverID)
 			if (!server) {
-				console.warn("[MCP] Server not found: ", toolConfig.mcpServerID)
+				console.warn("[MCP] Server not found: ", toolConfig.serverID)
 				continue
 			}
 
@@ -99,8 +99,8 @@ export class MCPManager {
 				const mcpTools = await server.listTools()
 
 				// Filter tools if specific IDs are configured
-				const toolsToConvert = toolConfig.mcpToolIDs && toolConfig.mcpToolIDs.length > 0
-					? mcpTools.filter(t => toolConfig.mcpToolIDs!.includes(t.name))
+				const toolsToConvert = toolConfig.toolIDs && toolConfig.toolIDs.length > 0
+					? mcpTools.filter(t => toolConfig.toolIDs!.includes(t.name))
 					: mcpTools
 
 				// Convert MCP tools to Agent SDK tools

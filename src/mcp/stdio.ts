@@ -136,11 +136,6 @@ export class SimpleMCPServerStdio {
 			console.log(`[MCP] Successfully connected to ${this.config.name}`)
 		} catch (err) {
 			console.error(`[MCP] Connection error for ${this.config.name}:`, err)
-			// Log process exit info if available
-			if (transportAny._process) {
-				console.error(`[MCP] Process exitCode:`, transportAny._process.exitCode)
-				console.error(`[MCP] Process signalCode:`, transportAny._process.signalCode)
-			}
 			throw err
 		}
 	}

@@ -20,10 +20,6 @@ export interface AgentSettings {
 		enabled: boolean,
 		type: ToolType,
 		description?: string,
-
-		mcpServerID?: string,
-		mcpToolIDs?: string[]
-
 		customToolPath?: string
 	}[]
 }
