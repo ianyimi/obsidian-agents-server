@@ -89,7 +89,7 @@ export class SimpleMCPServerStdio {
 	private client?: Client
 	private transport?: StdioClientTransport
 	private config: any
-	private tools: any[] = []
+	public tools: any[] = []
 
 	constructor(config: any) {
 		this.config = config
@@ -133,7 +133,9 @@ export class SimpleMCPServerStdio {
 
 		try {
 			await this.client.connect(this.transport)
+			this.tools = await this.listTools()
 			console.log(`[MCP] Successfully connected to ${this.config.name}`)
+			console.log(`[MCP] list ${this.config.name} tools: `, await this.client.listTools())
 		} catch (err) {
 			console.error(`[MCP] Connection error for ${this.config.name}:`, err)
 			throw err

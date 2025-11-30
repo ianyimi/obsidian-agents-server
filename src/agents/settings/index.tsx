@@ -2,22 +2,47 @@ import { Button } from "~/components/ui/button";
 import ObsidianAgentsServer from "~/index";
 import { Notice } from "obsidian";
 import { ModelProvider } from "~/models/providers";
-import { useEffect, useState } from "react";
-import { Trash } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Loader2Icon, Trash } from "lucide-react";
 import { ModelProviderID } from "~/models/providers/constants";
 import { SelectGroup, SelectItem } from "~/components/ui/select";
 import { useAppForm } from "~/components/form"
 import { nanoid } from "nanoid";
 import { TOOL_TYPES } from "~/tools/types";
 import { VAULT_TOOLS, VaultToolsID } from "~/tools/vault";
+import { MultiSelect, MultiSelectContent, MultiSelectGroup, MultiSelectItem, MultiSelectTrigger, MultiSelectValue } from "~/components/ui/multi-select";
+import { useQuery } from "@tanstack/react-query";
+import { CheckboxField } from "~/components/form/checkboxField";
+import { Label } from "~/components/ui/label";
+import { Checkbox } from "~/components/ui/checkbox";
 
-export default function AgentsSettings({ plugin, modelProviders }: { plugin: ObsidianAgentsServer, modelProviders: ModelProvider[] }) {
+export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServer }) {
 	const [models, setModels] = useState<{ id: string, provider: ModelProviderID }[]>([])
 	const vaultToolsArray = Object.values(VAULT_TOOLS).map(t => t.id)
+	const mcpServers = Array.from(plugin.mcpManager.servers.values())
+	const { data: mcpServerTools, isPending: pendingServerTools } = useQuery({
+		queryKey: ["mcp-servers-tools"],
+		queryFn: async () => {
+			const st = []
+			for (const server of mcpServers) {
+				const tools = await server.server.listTools()
+				st.push({
+					serverID: server.id,
+					tools
+				})
+			}
+			return st
+		}
+	})
+	const mcpServerToolsMap: Record<string, unknown[]> | undefined = mcpServerTools?.reduce((acc, tool) => {
+		// @ts-expect-error acc any type
+		acc[tool.id] = tool.tools
+		return acc
+	}, {} as Record<string, unknown[]>)
 
 	useEffect(() => {
 		const allModels: { id: string, provider: ModelProviderID }[] = []
-		modelProviders.forEach(p => {
+		plugin.modelProviders.forEach(p => {
 			p.models.forEach(model => {
 				if (!allModels.find(m => m.id === model)) {
 					allModels.push({ id: model, provider: p.id })
@@ -25,7 +50,7 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 			})
 		})
 		setModels(allModels)
-	}, [modelProviders])
+	}, [plugin.modelProviders])
 
 	const form = useAppForm({
 		defaultValues: {
@@ -126,6 +151,94 @@ export default function AgentsSettings({ plugin, modelProviders }: { plugin: Obs
 										</div>
 									</div>
 									{/* TODO: add multiselect for mcp tools inputs here */}
+									<form.Field name={`agents[${i}].mcpTools`} mode="array">
+										{(mcpToolsField) => (
+											<div>
+												<h2>MCP Tools</h2>
+												<div className="grid place-items-center">
+													<form.Subscribe
+														selector={(state) => (state.values.agents[i].mcpTools)}
+													>
+														{(mcpTools) => (
+															<MultiSelect values={mcpTools.map(t => t.serverID)} onValuesChange={(values) => {
+																const mcpToolsFieldValues = mcpToolsField.state.value
+																for (const serverID of values) {
+																	if (!mcpToolsFieldValues.find(tool => tool.serverID === serverID)) {
+																		mcpToolsField.pushValue({
+																			enabled: true,
+																			type: TOOL_TYPES.mcp,
+																			serverID,
+																			toolIDs: mcpServerTools?.find(t => t.serverID === serverID)?.tools.map(t => t.name) ?? []
+																		})
+																	}
+																}
+																if (values.length !== mcpToolsFieldValues.length) {
+																	const valuesSet = new Set(values)
+																	mcpToolsFieldValues.forEach((fv) => {
+																		if (valuesSet.has(fv.serverID)) return
+																		mcpToolsField.removeValue(mcpToolsField.state.value.findIndex(v => v.serverID === fv.serverID))
+																	})
+																}
+															}}>
+																<MultiSelectTrigger>
+																	<MultiSelectValue overflowBehavior="wrap" placeholder="Add MCP Tool" />
+																</MultiSelectTrigger>
+																<MultiSelectContent>
+																	<MultiSelectGroup>
+																		{mcpServers.map((mcpServer, i) => (
+																			<MultiSelectItem key={i} value={mcpServer.id} className="text-center">{mcpServer.server.name}</MultiSelectItem>
+																		))}
+																	</MultiSelectGroup>
+																</MultiSelectContent>
+															</MultiSelect>
+														)}
+													</form.Subscribe>
+												</div>
+												{mcpToolsField.state.value?.map((mcpTool, j) => (
+													<div key={j} className="relative">
+														{pendingServerTools ?
+															<Loader2Icon size={16} className="animate-spin" /> :
+															(
+																<div className="flex flex-col gap-4">
+																	<h4>{mcpServers.find(s => s.id === mcpTool.serverID)?.server.name}</h4>
+																	<Trash
+																		size={16}
+																		onClick={() => {
+																			mcpToolsField.removeValue(j)
+																			form.handleSubmit()
+																		}}
+																		className="absolute cursor-pointer right-4 top-0 hover:stroke-red-600 transition-colors duration-300"
+																	/>
+																	<div className="flex gap-6">
+																		{mcpServerTools?.find(mst => mst.serverID === mcpTool.serverID)?.tools.map((tool, k) => (
+																			<div key={k} className="flex gap-2 cursor-pointer">
+																				<Label htmlFor={tool.name}>{tool.title}</Label>
+																				<Checkbox
+																					id={tool.name}
+																					defaultChecked={mcpTool.toolIDs.includes(tool.name)}
+																					onCheckedChange={(checked) => {
+																						const existingTool = mcpToolsField.state.value.find(v => v.serverID === mcpTool.serverID && v.toolIDs.includes(tool.name))
+																						if (checked && !existingTool) {
+																							mcpTool.toolIDs.push(tool.name)
+																						}
+																						if (!checked && existingTool) {
+																							mcpTool.toolIDs = mcpTool.toolIDs.filter(t => t !== tool.name)
+																						}
+																						form.handleSubmit()
+																						console.log('checked: ', mcpToolsField.state.value, checked)
+																					}}
+																				/>
+																			</div>
+																		))}
+																	</div>
+																</div>
+															)
+														}
+													</div>
+												))}
+											</div>
+										)}
+									</form.Field>
 									<form.Field name={`agents[${i}].tools`} mode="array">
 										{(agentTools) => (
 											<div className="relative">

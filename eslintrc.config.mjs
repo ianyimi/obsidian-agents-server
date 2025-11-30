@@ -5,6 +5,7 @@ import perfectionist from "eslint-plugin-perfectionist";
 import importX from "eslint-plugin-import-x";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import pluginQuery from "@tanstack/eslint-plugin-query"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -43,6 +44,7 @@ export const defaultESLintIgnores = [
 ];
 
 export default tseslint.config(
+	...pluginQuery.configs["flat/recommended"],
 	{
 		ignores: defaultESLintIgnores,
 	},
