@@ -26,9 +26,8 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 
 	return (
 		<form.AppForm>
-			<div className="relative">
-				<Button type="submit" className="right-0 absolute">Save</Button>
-				<p className="text-center w-full">General Settings</p>
+			<div className="relative py-6">
+				<Button type="submit" className="right-0 absolute -top-11">Save</Button>
 				<form.Field
 					name="deviceID"
 					children={(field) => {

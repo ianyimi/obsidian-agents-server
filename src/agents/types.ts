@@ -7,6 +7,7 @@ export interface AgentSettings {
 	name: string,
 	enabled: boolean,
 	instructions: string,
+	collapsed: boolean,
 	modelProvider: ModelProviderID
 	model: string
 	vaultTools: Record<VaultToolsID, boolean>

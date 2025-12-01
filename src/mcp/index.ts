@@ -5,7 +5,18 @@ import { MCPServerConfig } from "~/settings/types"
 import { AgentSettings } from "~/agents/types"
 import { SimpleMCPServerStdio } from "./stdio"
 import { SimpleMCPServerSSE } from "./sse"
-import z from "zod"
+
+// MCP Tool types from specification
+export interface MCPTool {
+	name: string
+	description?: string
+	inputSchema: {
+		type: "object"
+		properties?: Record<string, any>
+		required?: string[]
+		[key: string]: any
+	}
+}
 
 export interface MCPServer {
 	id: string
@@ -69,12 +80,17 @@ export class MCPManager {
 	}
 
 	private convertEnvArrayToRecord(envArray?: { name: string, value: string }[]): Record<string, string> {
-		if (!envArray || envArray.length === 0) return {}
+		if (!envArray || envArray.length === 0) {
+			console.warn('[MCP] No env variables provided in config')
+			return {}
+		}
 
-		return envArray.reduce((acc, { name, value }) => {
+		const result = envArray.reduce((acc, { name, value }) => {
 			acc[name] = value
 			return acc
 		}, {} as Record<string, string>)
+
+		return result
 	}
 
 	private async createServer(config: MCPServerConfig): Promise<SimpleMCPServerStdio | SimpleMCPServerSSE> {
@@ -129,31 +145,38 @@ export class MCPManager {
 
 			try {
 				const mcpTools = await server.listTools()
+				const toolsToConvert = mcpTools.filter(t => toolConfig.toolIDs.includes(t.name))
 
-				// Filter tools if specific IDs are configured
-				const toolsToConvert = toolConfig.toolIDs && toolConfig.toolIDs.length > 0
-					? mcpTools.filter(t => toolConfig.toolIDs!.includes(t.name))
-					: mcpTools
-
-				// Convert MCP tools to Agent SDK tools
 				for (const mcpTool of toolsToConvert) {
-					const agentTool: Tool = tool({
-						name: mcpTool.name,
-						description: mcpTool.description || "",
-						parameters: z.object({
-							args: z.record(z.string(), z.string())
-						}),
-						async execute(args: Record<string, unknown>) {
-							try {
-								const result = await server.callTool(mcpTool.name, args)
-								return JSON.stringify(result)
-							} catch (err) {
-								console.error(`[MCP] Error executing tool ${mcpTool.name}:`, err)
-								throw err
+					tools.push(
+						tool({
+							name: mcpTool.name,
+							description: mcpTool.description || "",
+							parameters: mcpTool.inputSchema as any,
+							strict: false, // Use non-strict mode for JSON Schema
+							async execute(args: Record<string, unknown>) {
+								try {
+									const result = await server.callTool(mcpTool.name, args)
+
+									// MCP tools return content array - extract text from first content item
+									if (Array.isArray(result)) {
+										// Result is MCP content array: [{ type: "text", text: "..." }]
+										const textContent = result.find(item => item.type === 'text')
+										if (textContent && textContent.text) {
+											const extractedText = textContent.text
+											return extractedText
+										}
+									}
+
+									// Fallback: return result as-is, let agents-sdk handle serialization
+									return result
+								} catch (err) {
+									console.error(`[MCP] Error executing tool ${mcpTool.name}:`, err)
+									throw err
+								}
 							}
-						}
-					})
-					tools.push(agentTool)
+						})
+					)
 				}
 			} catch (err) {
 				console.error(`[MCP] Error getting tools from server: `, err)

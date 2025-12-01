@@ -2,24 +2,25 @@ import { ModelProviderSettings } from "~/models/providers/constants";
 import { AgentSettings } from "~/agents/types";
 
 interface BaseMCPServerConfig {
-	id: string,
-	name: string,
-	enabled: boolean,
+	id: string
+	name: string
+	enabled: boolean
 	cacheToolsList?: boolean
+	collapsed: boolean
 }
 
 export interface StdioMCPServerConfig extends BaseMCPServerConfig {
-	type: "stdio",
-	command: string,
-	args: string,
+	type: "stdio"
+	command: string
+	args: string
 	env?: {
-		name: string,
+		name: string
 		value: string
 	}[]
 }
 
 export interface SseMCPServerConfig extends BaseMCPServerConfig {
-	type: "sse",
+	type: "sse"
 	url: string
 }
 

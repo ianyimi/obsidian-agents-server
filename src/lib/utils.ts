@@ -8,6 +8,18 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs))
 }
 
+/**
+ * Format a tool name for display
+ * Converts snake_case to Title Case
+ * Example: "ref_search_documentation" -> "Ref Search Documentation"
+ */
+function formatToolName(name: string): string {
+	return name
+		.split('_')
+		.map(word => word.charAt(0).toUpperCase() + word.slice(1))
+		.join(' ');
+}
+
 export function convertMessagesToAgentInput(messages: ChatCompletionMessage[]): AgentInputItem[] {
 	return messages.map((msg) => {
 		const contentText = typeof msg.content === 'string'
@@ -151,7 +163,10 @@ export async function* convertStreamToChunks(
 			// Tool call initiated
 			if (runEvent.name === 'tool_called' && runEvent.item?.type === 'tool_call_item') {
 				const funcName = runEvent.item.rawItem?.name || 'unknown';
-				const toolLabel = Object.values(VAULT_TOOLS).find(vt => vt.id === funcName)
+				// Check if it's a vault tool for a friendly label
+				const vaultTool = Object.values(VAULT_TOOLS).find(vt => vt.id === funcName);
+				const displayName = vaultTool ? vaultTool.label : formatToolName(funcName);
+
 				yield {
 					id,
 					object: 'chat.completion.chunk',
@@ -160,7 +175,7 @@ export async function* convertStreamToChunks(
 					choices: [{
 						index: 0,
 						delta: {
-							content: `\n[Tool Call]: ${toolLabel ? toolLabel.label : funcName}\n`,
+							content: `\n[Tool Call]: ${displayName}\n`,
 						},
 						finish_reason: null,
 						logprobs: null,
@@ -171,7 +186,10 @@ export async function* convertStreamToChunks(
 			// Tool output received
 			else if (runEvent.name === 'tool_output' && runEvent.item?.type === 'tool_call_output_item') {
 				const funcName = runEvent.item.rawItem?.name || 'unknown';
-				const toolLabel = Object.values(VAULT_TOOLS).find(vt => vt.id === funcName)
+				// Check if it's a vault tool for a friendly label
+				const vaultTool = Object.values(VAULT_TOOLS).find(vt => vt.id === funcName);
+				const displayName = vaultTool ? vaultTool.label : formatToolName(funcName);
+
 				yield {
 					id,
 					object: 'chat.completion.chunk',
@@ -180,7 +198,7 @@ export async function* convertStreamToChunks(
 					choices: [{
 						index: 0,
 						delta: {
-							content: `[Tool Complete]: ${toolLabel ? toolLabel.label : funcName}\n`,
+							content: `[Tool Complete]: ${displayName}\n`,
 						},
 						finish_reason: null,
 						logprobs: null,

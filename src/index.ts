@@ -27,7 +27,7 @@ export default class ObsidianAgentsServer extends Plugin {
 	isControlDevice: boolean = false;
 	modelProviders: ModelProvider[] = []
 	agents: Agent[]
-	runner: Runner = new Runner()
+	runner: Runner = new Runner({ tracingDisabled: true })
 	honoApp?: Hono
 	server?: ServerType
 	tools: AgentTool[] = []

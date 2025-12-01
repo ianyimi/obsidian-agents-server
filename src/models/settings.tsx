@@ -22,11 +22,10 @@ export default function ModelSettings({ plugin }: { plugin: ObsidianAgentsServer
 	return (
 		<form.AppForm>
 			<div className="relative">
-				<Button type="submit" className="right-0 absolute top-0">Save</Button>
-				<p className="text-center pb-8">Model Settings</p>
+				<Button type="submit" className="right-0 absolute -top-11">Save</Button>
 				<form.AppField name="modelProviders" mode="array">
 					{(field) => (
-						<div>
+						<div className="py-6">
 							<field.SelectField onValueChange={(value) => {
 								const provider = MODEL_PROVIDERS[value as ModelProviderID]
 								field.pushValue({ id: value as ModelProviderID, label: provider.label, baseURL: provider.baseURL })
