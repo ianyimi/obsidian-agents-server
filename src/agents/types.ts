@@ -6,10 +6,14 @@ export interface AgentSettings {
 	id: string,
 	name: string,
 	enabled: boolean,
+	useAsTool: boolean,
+	toolName: string,
+	toolDescription: string,
 	instructions: string,
 	collapsed: boolean,
 	modelProvider: ModelProviderID
 	model: string
+	agentTools: string[]
 	vaultTools: Record<VaultToolsID, boolean>
 	mcpTools: {
 		enabled: boolean,

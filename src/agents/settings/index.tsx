@@ -1,7 +1,7 @@
 import { Button } from "~/components/ui/button";
 import ObsidianAgentsServer from "~/index";
 import { Notice } from "obsidian";
-import { useEffect, useRef, useState } from "react";
+import { Activity, useEffect, useState } from "react";
 import { Loader2Icon, Trash } from "lucide-react";
 import { ModelProviderID } from "~/models/providers/constants";
 import { SelectGroup, SelectItem } from "~/components/ui/select";
@@ -33,11 +33,6 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 			return st
 		}
 	})
-	const mcpServerToolsMap: Record<string, unknown[]> | undefined = mcpServerTools?.reduce((acc, tool) => {
-		// @ts-expect-error acc any type
-		acc[tool.id] = tool.tools
-		return acc
-	}, {} as Record<string, unknown[]>)
 
 	useEffect(() => {
 		const allModels: { id: string, provider: ModelProviderID }[] = []
@@ -53,7 +48,8 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 
 	const form = useAppForm({
 		defaultValues: {
-			agents: plugin.settings.agents
+			agents: plugin.settings.agents,
+			restartServer: false
 		},
 		onSubmit: async ({ value }) => {
 			let reloadServer = false
@@ -63,8 +59,9 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 
 			plugin.settings.agents = value.agents
 			await plugin.saveSettings()
-			if (reloadServer) {
+			if (reloadServer || value.restartServer) {
 				await plugin.restartServer()
+				form.setFieldValue("restartServer", false)
 			}
 			new Notice("Settings Updated!")
 		}
@@ -108,9 +105,11 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 											}}
 											className="absolute cursor-pointer right-4 top-2 hover:stroke-red-600 transition-colors duration-300"
 										/>
-										<form.AppField name={`agents[${i}].enabled`}>
-											{(subField) => <subField.CheckboxField label="Enabled" orientation="horizontal" />}
-										</form.AppField>
+										<div className="flex gap-4">
+											<form.AppField name={`agents[${i}].enabled`}>
+												{(subField) => <subField.CheckboxField label="Enabled" orientation="horizontal" />}
+											</form.AppField>
+										</div>
 										<form.AppField name={`agents[${i}].name`}>
 											{(subField) => <subField.TextField label="Name" />}
 										</form.AppField>
@@ -123,6 +122,9 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 													subField.handleChange(value)
 													const model = models.find(m => m.id === value)
 													if (model) {
+														if (subField.state.value !== value) {
+															form.setFieldValue("restartServer", true)
+														}
 														form.setFieldValue(`agents[${i}].modelProvider`, model.provider)
 													}
 												}}>
@@ -132,6 +134,43 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 														))}
 													</SelectGroup>
 												</subField.SelectField>
+											)}
+										</form.AppField>
+										<form.AppField name={`agents[${i}].agentTools`}>
+											{(subField) => (
+												<div className="flex flex-col gap-2">
+													<h2 className="text-center">Agent as Tool Settings</h2>
+													<div className="flex justify-center">
+														<form.AppField name={`agents[${i}].useAsTool`}>
+															{(subField) => <subField.CheckboxField label="Use Agent as Tool" orientation="horizontal" />}
+														</form.AppField>
+													</div>
+													<form.Subscribe
+														selector={(state) => state.values.agents[i].useAsTool}
+													>
+														{(useAsTool) => (
+															<Activity mode={useAsTool ? "visible" : "hidden"}>
+																<form.AppField name={`agents[${i}].toolName`}>
+																	{(subField) => (<subField.TextField label="Tool Name" defaultValue={agent.name} />)}
+																</form.AppField>
+																<form.AppField name={`agents[${i}].toolDescription`}>
+																	{(subField) => (<subField.TextareaField label="Tool Description" />)}
+																</form.AppField>
+															</Activity>
+														)}
+													</form.Subscribe>
+													<div className="flex justify-center">
+														<subField.MultiSelectField label="Agents available as Tools for this Agent">
+															<MultiSelectContent search={false}>
+																<MultiSelectGroup>
+																	{form.state.values.agents.filter(a => a.id !== agent.id && a.useAsTool).map((agentTool, i) => (
+																		<MultiSelectItem key={i} value={agentTool.id} className="text-center">{agentTool.name}</MultiSelectItem>
+																	))}
+																</MultiSelectGroup>
+															</MultiSelectContent>
+														</subField.MultiSelectField>
+													</div>
+												</div>
 											)}
 										</form.AppField>
 										<div className="py-6">
@@ -147,7 +186,6 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 												})}
 											</div>
 										</div>
-										{/* TODO: add multiselect for mcp tools inputs here */}
 										<form.Field name={`agents[${i}].mcpTools`} mode="array">
 											{(mcpToolsField) => (
 												<div>
@@ -156,39 +194,42 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 														<form.Subscribe
 															selector={(state) => (state.values.agents[i].mcpTools)}
 														>
-															{(mcpTools) => (
-																<MultiSelect values={mcpTools.map(t => t.serverID)} onValuesChange={(values) => {
-																	const mcpToolsFieldValues = mcpToolsField.state.value
-																	for (const serverID of values) {
-																		if (!mcpToolsFieldValues.find(tool => tool.serverID === serverID)) {
-																			mcpToolsField.pushValue({
-																				enabled: true,
-																				type: TOOL_TYPES.mcp,
-																				serverID,
-																				toolIDs: mcpServerTools?.find(t => t.serverID === serverID)?.tools.map(t => t.name) ?? []
+															{(mcpTools) => {
+																const selectedServerIDs = mcpTools.map(t => t.serverID)
+																return (
+																	<MultiSelect values={selectedServerIDs} onValuesChange={(values) => {
+																		const mcpToolsFieldValues = mcpToolsField.state.value
+																		for (const serverID of values) {
+																			if (!mcpToolsFieldValues.find(tool => tool.serverID === serverID)) {
+																				mcpToolsField.pushValue({
+																					enabled: true,
+																					type: TOOL_TYPES.mcp,
+																					serverID,
+																					toolIDs: mcpServerTools?.find(t => t.serverID === serverID)?.tools.map(t => t.name) ?? []
+																				})
+																			}
+																		}
+																		if (values.length !== mcpToolsFieldValues.length) {
+																			const valuesSet = new Set(values)
+																			mcpToolsFieldValues.forEach((fv) => {
+																				if (valuesSet.has(fv.serverID)) return
+																				mcpToolsField.removeValue(mcpToolsField.state.value.findIndex(v => v.serverID === fv.serverID))
 																			})
 																		}
-																	}
-																	if (values.length !== mcpToolsFieldValues.length) {
-																		const valuesSet = new Set(values)
-																		mcpToolsFieldValues.forEach((fv) => {
-																			if (valuesSet.has(fv.serverID)) return
-																			mcpToolsField.removeValue(mcpToolsField.state.value.findIndex(v => v.serverID === fv.serverID))
-																		})
-																	}
-																}}>
-																	<MultiSelectTrigger>
-																		<MultiSelectValue overflowBehavior="wrap" placeholder="Add MCP Tool" />
-																	</MultiSelectTrigger>
-																	<MultiSelectContent>
-																		<MultiSelectGroup>
-																			{mcpServers.map((mcpServer, i) => (
-																				<MultiSelectItem key={i} value={mcpServer.id} className="text-center">{mcpServer.server.name}</MultiSelectItem>
-																			))}
-																		</MultiSelectGroup>
-																	</MultiSelectContent>
-																</MultiSelect>
-															)}
+																	}}>
+																		<MultiSelectTrigger>
+																			<MultiSelectValue overflowBehavior="wrap" placeholder="Add MCP Tool" />
+																		</MultiSelectTrigger>
+																		<MultiSelectContent>
+																			<MultiSelectGroup>
+																				{mcpServers.map((mcpServer, i) => (
+																					<MultiSelectItem key={i} value={mcpServer.id} className="text-center">{mcpServer.server.name}</MultiSelectItem>
+																				))}
+																			</MultiSelectGroup>
+																		</MultiSelectContent>
+																	</MultiSelect>
+																)
+															}}
 														</form.Subscribe>
 													</div>
 													{mcpToolsField.state.value?.map((mcpTool, j) => (
@@ -222,7 +263,6 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 																								mcpTool.toolIDs = mcpTool.toolIDs.filter(t => t !== tool.name)
 																							}
 																							form.handleSubmit()
-																							console.log('checked: ', mcpToolsField.state.value, checked)
 																						}}
 																					/>
 																				</div>
@@ -271,10 +311,6 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 																<form.AppField name={`agents[${i}].tools[${j}].type`}>
 																	{(subField) => (
 																		<div>
-																			{/* <subField.MultiSelectField label="Type" placeholder="Select Tool Type"> */}
-																			{/* <MultiSelectGroup> */}
-																			{/* </MultiSelectGroup> */}
-																			{/* </subField.MultiSelectField> */}
 																			<subField.SelectField label="Type" placeholder="Select Tool Type">
 																				<SelectGroup>
 																					{Object.values(TOOL_TYPES).filter(t => t.id !== "" && t.id !== "vault").map((tool, k) => (
@@ -303,7 +339,11 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 										collapsed: false,
 										modelProvider: "" as ModelProviderID,
 										model: "",
+										toolName: "",
+										toolDescription: "",
 										enabled: true,
+										useAsTool: false,
+										agentTools: [],
 										vaultTools: Object.values(VAULT_TOOLS).reduce(
 											(acc, tool) => {
 												acc[tool.id] = false;

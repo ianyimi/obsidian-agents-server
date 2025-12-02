@@ -26,7 +26,7 @@ export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
 	isControlDevice: boolean = false;
 	modelProviders: ModelProvider[] = []
-	agents: Agent[]
+	agents: Record<string, Agent> = {}
 	runner: Runner = new Runner({ tracingDisabled: true })
 	honoApp?: Hono
 	server?: ServerType
@@ -94,24 +94,36 @@ export default class ObsidianAgentsServer extends Plugin {
 		new Notice("Settings Saved!")
 	}
 
-	async initializeAgents(): Promise<Agent[]> {
-		const agents = []
+	async initializeAgents() {
+		const agents: Record<string, Agent> = {}
 		for (const agent of this.settings.agents) {
 			if (!agent.enabled) continue
 			const modelProvider = this.modelProviders.find(mp => mp.id === agent.modelProvider)
 			if (!modelProvider?.instance) continue
 			const model = aisdk(modelProvider.instance(agent.model))
 			const tools = await this.getAgentTools(agent)
-			console.log('agent tools: ', tools)
-			agents.push(
-				new Agent({
-					name: agent.name,
-					instructions: agent.instructions,
-					model,
-					tools
-				})
-			)
+			this.agents[agent.id] = new Agent({
+				name: agent.name,
+				instructions: agent.instructions,
+				model,
+				tools
+			})
 		}
+		this.settings.agents.forEach(agentSettings => {
+			if (agentSettings.agentTools.length > 0) {
+				const updatedAgent = this.agents[agentSettings.id]
+				agentSettings.agentTools.forEach(agentToolID => {
+					const agentTool = this.agents[agentToolID]
+					const agentToolSettings = this.settings.agents.find(a => a.id === agentToolID)
+					if (!agentToolSettings) return
+					updatedAgent.tools.push(agentTool.asTool({
+						toolName: agentToolSettings.toolName,
+						toolDescription: agentToolSettings.toolDescription
+					}))
+				})
+				this.agents[agentSettings.id] = updatedAgent
+			}
+		})
 		return agents
 	}
 
@@ -134,6 +146,7 @@ export default class ObsidianAgentsServer extends Plugin {
 
 		const mcpTools = await this.mcpManager.getToolsForAgent(agent)
 		tools.push(...mcpTools)
+
 		// Custom Tools
 		// for (const tool of agent.tools.filter(t => t.enabled)) {
 		// 	switch (tool.type.id) {
@@ -171,7 +184,7 @@ export default class ObsidianAgentsServer extends Plugin {
 		app.use("/*", cors())
 
 		app.get("/v1/models", (c) => {
-			const models = this.agents.map((agent) => ({
+			const models = Object.values(this.agents).map((agent) => ({
 				id: agent.name,
 				object: "model",
 				created: Date.now(),
@@ -191,11 +204,11 @@ export default class ObsidianAgentsServer extends Plugin {
 				const body = await c.req.json() as CreateChatCompletionBody
 				const { model, messages, stream = false } = body
 
-				const agent = this.agents.find(a => a.name === model)
+				const agent = Object.values(this.agents).find(a => a.name === model)
 				if (!agent) {
 					return c.json({
 						error: {
-							message: `Model '${model}' not found. Available models: ${this.agents.map(a => a.name).join(', ')}`,
+							message: `Model '${model}' not found. Available models: ${Object.values(this.agents).map(a => a.name).join(', ')}`,
 							type: "invalid_request_error"
 						}
 					}, 404)

@@ -33,7 +33,7 @@ export function MultiSelectField({
 				}}
 				{...multiSelectProps}
 			>
-				<MultiSelectTrigger>
+				<MultiSelectTrigger className="w-full">
 					<MultiSelectValue placeholder={placeholder} />
 				</MultiSelectTrigger>
 				<MultiSelectContent>
