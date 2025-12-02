@@ -60,14 +60,31 @@ export default class ObsidianAgentsServer extends Plugin {
 		// Merge loaded data with defaults
 		this.settings = Object.assign({}, DEFAULT_SETTINGS, loadedData);
 
+		let needsSave = false;
+
 		// Generate deviceID only if it doesn't exist or is empty
 		if (!this.settings.deviceID || this.settings.deviceID === "") {
 			this.settings.deviceID = nanoid();
-			await this.saveSettings();
+			needsSave = true;
 		} else {
 			if (this.settings.controlDeviceID !== "") {
 				this.isControlDevice = this.settings.controlDeviceID === this.settings.deviceID
 			}
+		}
+
+		// Migration: Ensure all agents have an id
+		if (this.settings.agents && Array.isArray(this.settings.agents)) {
+			for (const agent of this.settings.agents) {
+				if (!agent.id || agent.id === "") {
+					agent.id = nanoid();
+					needsSave = true;
+					console.log(`[Settings] Generated missing id for agent: ${agent.name} -> ${agent.id}`);
+				}
+			}
+		}
+
+		if (needsSave) {
+			await this.saveSettings({ hideNotice: true });
 		}
 	}
 

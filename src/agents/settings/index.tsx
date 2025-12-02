@@ -73,7 +73,9 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 	return (
 		<form.AppForm>
 			<div className="relative">
-				<Button type="submit" onClick={form.handleSubmit} className="right-0 -top-11 absolute">Save</Button>
+				<Button type="submit" onClick={form.handleSubmit} className="right-0 -top-11 absolute">
+					Save
+				</Button>
 				<form.Field name="agents" mode="array">
 					{(field) => (
 						<Accordion className="py-6 flex flex-col gap-4" type="multiple" defaultValue={form.state.values.agents.filter(a => !a.collapsed).map(a => a.id)} onValueChange={async (value) => {
