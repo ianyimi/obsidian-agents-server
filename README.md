@@ -1,94 +1,455 @@
-# Obsidian Sample Plugin
+# Obsidian Agents Server
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+> Transform your Obsidian vault into a powerful AI agent framework with an OpenAI-compatible API server.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](https://github.com/ianyimi/obsidian-agents-server)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open Sample Modal" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## Overview
 
-## First time developing plugins?
+**Obsidian Agents Server** is a plugin that turns Obsidian into a multi-agent AI framework server. It allows you to create, configure, and run multiple custom AI agents that can interact with your vault, execute tools, and be accessed through a REST API.
 
-Quick starting guide for new plugin devs:
+### What Makes This Unique?
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+- **Local AI Control**: Run agents entirely on your machine using LMStudio, Ollama, or other local providers
+- **Agent Composition**: Agents can use other agents as tools, enabling complex multi-tier workflows
+- **MCP Protocol Support**: First-class integration with Model Context Protocol for extensible tooling
+- **Vault Integration**: Deep Obsidian integration with full read/write access to your vault
+- **OpenAI Compatible**: Drop-in replacement for OpenAI API with streaming support
 
-## Releasing new releases
+## Features
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+### Multi-Agent Framework
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+Create unlimited AI agents with unique capabilities:
 
-## Adding your plugin to the community plugin list
+- **Custom Instructions**: Write tailored system prompts for each agent
+- **Model Selection**: Choose different AI models per agent from multiple providers
+- **Enable/Disable**: Toggle agents without losing configuration
+- **Agent as Tool**: Convert any agent into a reusable tool for other agents
+- **Flexible Tool Configuration**: Select which tools each agent can access
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+![Agents Configuration](public/settings-agents.png)
 
-## How to use
+### Model Provider Integration
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+Connect to multiple AI model providers:
 
-## Manually installing the plugin
+- **LMStudio**: Local inference with customizable base URL (default: `http://localhost:1234/v1`)
+- **Ollama**: Local models via Ollama (default: `http://localhost:11434`)
+- **Custom Providers**: Add any OpenAI-compatible API endpoint
+- **Dynamic Model Discovery**: Automatically fetches available models from providers
+- **Per-Agent Model Selection**: Different agents can use different models
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+![Model Providers](public/settings-models.png)
 
-## Improve code quality with eslint (optional)
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- To use eslint with this project, make sure to install eslint from terminal:
-  - `npm install -g eslint`
-- To use eslint to analyze this project use this command:
-  - `eslint main.ts`
-  - eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder:
-  - `eslint ./src/`
+### Vault Tools (Obsidian Operations)
 
-## Funding URL
+Give your agents powerful vault manipulation capabilities:
 
-You can include funding URLs where people who use your plugin can financially support it.
+| Tool | Description |
+|------|-------------|
+| **Count Notes** | Get total markdown file count in vault |
+| **Read File** | Read file contents at any path (with optional caching) |
+| **Create File** | Create new plaintext files in vault |
+| **Update File** | Modify existing file contents |
+| **Delete File** | Remove files (with force delete option) |
+| **Create File From Template** | Use Templater plugin templates for file creation |
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
+All file operations support custom creation/modification timestamps.
 
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+### MCP (Model Context Protocol) Integration
+
+Connect your agents to MCP servers for extended functionality:
+
+- **Two Transport Types**:
+  - **Stdio**: Run local commands as MCP servers
+  - **SSE**: Connect to HTTP-based MCP servers
+- **Multiple Servers**: Configure unlimited MCP servers simultaneously
+- **Tool Selection**: Choose specific tools from each MCP server per agent
+- **Environment Variables**: Pass custom ENV variables to stdio servers
+- **Tool Caching**: Optional caching for improved performance
+- **Automatic Discovery**: Lists all available tools from connected servers
+
+![MCP Servers Configuration](public/settings-mcp-servers.png)
+
+### OpenAI-Compatible REST API
+
+Access your agents programmatically through a standards-compliant API:
+
+#### Endpoints
+
+**GET `/v1/models`** - List all enabled agents
+
+```bash
+curl http://localhost:2345/v1/models
 ```
 
-If you have multiple URLs, you can also do:
+**POST `/v1/chat/completions`** - Send messages to agents
 
-```json
+```bash
+# Non-streaming request
+curl http://localhost:2345/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Orchestrator Agent",
+    "messages": [
+      {"role": "user", "content": "Analyze my vault and summarize key topics"}
+    ],
+    "stream": false
+  }'
+
+# Streaming request (SSE)
+curl http://localhost:2345/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Orchestrator Agent",
+    "messages": [
+      {"role": "user", "content": "Create a weekly summary"}
+    ],
+    "stream": true
+  }'
+```
+
+#### Features
+
+- **Streaming Support**: Real-time Server-Sent Events (SSE) responses
+- **Tool Execution Tracking**: See tool calls as they happen in streaming mode
+- **Full OpenAI Compatibility**: Works with OpenAI SDKs and clients
+- **CORS Enabled**: Ready for cross-origin requests
+
+## Installation
+
+### Using BRAT (Beta Reviewers Auto-update Tester)
+
+The easiest way to install this plugin while it's not yet in the community plugin list:
+
+1. Install the [BRAT plugin](https://github.com/TfTHacker/obsidian42-brat) from the Obsidian Community Plugins
+2. Open **Settings → BRAT → Beta Plugin List → Add Beta plugin**
+3. Enter this repository URL: `https://github.com/ianyimi/obsidian-agents-server`
+4. Click **Add Plugin**
+5. Once installed, enable the plugin in **Settings → Community plugins**
+
+BRAT will automatically check for updates and notify you when new versions are available.
+
+### From Release
+
+1. Download the latest release from the [releases page](https://github.com/ianyimi/obsidian-agents-server/releases)
+2. Extract the files to your vault's `.obsidian/plugins/obsidian-agents-server` folder
+3. Reload Obsidian and enable the plugin in Settings → Community plugins
+
+### Manual Installation
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/ianyimi/obsidian-agents-server.git
+   ```
+
+2. Install dependencies and build:
+   ```bash
+   npm install
+   npm run build
+   ```
+
+3. Copy `main.js`, `manifest.json`, and `styles.css` to your vault's plugin folder:
+   ```
+   VaultFolder/.obsidian/plugins/obsidian-agents-server/
+   ```
+
+4. Reload Obsidian and enable the plugin
+
+## Quick Start
+
+### 1. Configure a Model Provider
+
+1. Open Settings → Agents Server → **Models** tab
+2. Add your model provider (e.g., LMStudio or Ollama)
+3. Verify the base URL matches your local setup
+4. The plugin will automatically discover available models
+
+![General Settings](public/settings-general.png)
+
+### 2. Create Your First Agent
+
+1. Navigate to the **Agents** tab
+2. Click "Add Agent"
+3. Configure your agent:
+   - **Name**: Give it a descriptive name
+   - **Instructions**: Write a system prompt defining its role
+   - **Model**: Select a model from your configured providers
+   - **Tools**: Enable vault tools, MCP tools, or other agents
+
+### 3. Start the Server
+
+The server starts automatically when the plugin loads. By default it runs on port `2345` (configurable in General settings).
+
+### 4. Test Your Agent
+
+```bash
+# List available agents
+curl http://localhost:2345/v1/models
+
+# Send a request
+curl http://localhost:2345/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "Your Agent Name",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+## Advanced Usage
+
+### Agent Composition
+
+Create sophisticated workflows by having agents use other agents as tools:
+
+1. Create a specialized agent (e.g., "Research Agent")
+2. Enable "Use Agent as Tool" in its settings
+3. Give it a tool name and description
+4. In another agent's settings, add it to "Agents available as Tools"
+
+**Example Workflow:**
+```
+Orchestrator Agent
+  ├─→ Research Agent (searches and reads vault)
+  ├─→ Writer Agent (creates/updates files)
+  └─→ Analyzer Agent (processes and summarizes)
+```
+
+### MCP Server Examples
+
+#### Connecting to Context7 (Stdio)
+
+```
+Name: Context7
+Type: Stdio (Local Command)
+Command: npx
+Args: -y,@upstash/context7-mcp
+Env Variables:
+  CONTEXT7_API_KEY: your-api-key-here
+```
+
+#### Connecting to Ref (Stdio)
+
+```
+Name: Ref
+Type: Stdio (Local Command)
+Command: npx
+Args: ref-tools-mcp@latest
+```
+
+### Custom Server Port
+
+Change the default port in **General** settings:
+
+1. Open Settings → Agents Server → **General** tab
+2. Modify the "ServerPort" field
+3. Save settings (server will restart automatically)
+
+### Multi-Device Setup
+
+Use the Device ID system for multi-device coordination:
+
+1. Each Obsidian instance gets a unique Device ID (shown in General settings)
+2. Optionally set a "Control Device ID" to designate a primary device
+3. Future versions will support cross-device agent orchestration
+
+## Configuration
+
+### Settings Structure
+
+```typescript
 {
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
+  "serverPort": 2345,
+  "deviceID": "auto-generated-unique-id",
+  "controlDeviceID": "optional-control-device-id",
+  "modelProviders": [
+    {
+      "name": "LMStudio",
+      "baseURL": "http://localhost:1234/v1"
     }
+  ],
+  "mcpServers": [
+    {
+      "name": "Context7",
+      "enabled": true,
+      "type": "stdio",
+      "command": "npx",
+      "args": "-y,@upstash/context7-mcp",
+      "env": {"CONTEXT7_API_KEY": "..."}
+    }
+  ],
+  "agents": [
+    {
+      "id": "unique-id",
+      "name": "Orchestrator Agent",
+      "enabled": true,
+      "instructions": "Your system prompt here...",
+      "model": "qwen/qwen3-vl-8b",
+      "useAsTool": false,
+      "vaultTools": {
+        "countNotes": true,
+        "readFile": true
+      },
+      "mcpTools": {...},
+      "agentTools": ["other-agent-id"]
+    }
+  ]
 }
 ```
 
-## API Documentation
+## Architecture
 
-See https://github.com/obsidianmd/obsidian-api
+### Core Components
+
+- **ObsidianAgentsServer**: Main plugin class managing lifecycle and HTTP server
+- **MCPManager**: Handles MCP server connections and tool execution
+- **ModelProvider**: Base class for AI model provider integration
+- **Agent Runtime**: Built on OpenAI Agents SDK v0.3.3
+
+### Tech Stack
+
+**Frontend:**
+- React + TypeScript
+- Radix UI components
+- TanStack React Query & Forms
+- Tailwind CSS
+- Lucide React icons
+
+**Backend:**
+- Hono.js HTTP framework
+- OpenAI Agents SDK
+- MCP SDK (@modelcontextprotocol/sdk)
+- Node.js server runtime
+
+**AI Integration:**
+- @ai-sdk/openai-compatible
+- Zod for schema validation
+
+## Use Cases
+
+### Personal Knowledge Management
+- Automated note summarization
+- Topic clustering and analysis
+- Research assistance with vault context
+
+### Content Creation
+- Template-based content generation
+- Multi-agent editing workflows
+- Automated drafting and refinement
+
+### Task Automation
+- Scheduled vault maintenance
+- Batch file operations
+- Metadata enrichment
+
+### Development Workflows
+- Code documentation generation
+- Project planning assistance
+- Technical research aggregation
+
+## Troubleshooting
+
+### Server Won't Start
+
+- Check if port 2345 (or your custom port) is already in use
+- Verify model provider endpoints are accessible
+- Check Obsidian console for error messages (Cmd+Opt+I / Ctrl+Shift+I)
+
+### Agent Not Responding
+
+- Ensure the agent is enabled in settings
+- Verify the selected model is available from the provider
+- Check that the model provider server is running
+
+### MCP Tools Not Working
+
+- Test MCP server connection independently
+- Verify command and args are correct for stdio servers
+- Check environment variables are properly set
+- Enable "Cache Tools List" for better reliability
+
+### File Operations Failing
+
+- Ensure file paths are relative to vault root
+- Check file/folder permissions
+- Verify Templater plugin is installed if using template tools
+
+## Development
+
+### Building from Source
+
+```bash
+# Install dependencies
+npm install
+
+# Development build with watch
+npm run dev
+
+# Production build
+npm run build
+```
+
+### Project Structure
+
+```
+obsidian-agents-server/
+├── src/
+│   ├── main.ts              # Plugin entry point
+│   ├── settings.tsx         # Settings UI (React)
+│   ├── mcp/                 # MCP integration
+│   │   ├── index.ts         # MCPManager
+│   │   ├── stdio.ts         # Stdio transport
+│   │   └── sse.ts           # SSE transport
+│   ├── models/              # Model providers
+│   │   └── providers/
+│   ├── tools/               # Vault tool definitions
+│   └── types/               # TypeScript types
+├── public/                  # Screenshots and assets
+└── manifest.json            # Plugin metadata
+```
+
+## Roadmap
+
+- [ ] Add more built-in vault tools
+- [ ] Support for custom user tools via UI
+- [ ] Agent execution history and logging
+- [ ] Rate limiting and quota management
+- [ ] Agent-to-agent communication protocol
+- [ ] Multi-device agent orchestration
+- [ ] Plugin marketplace integration
+- [ ] Web UI for agent monitoring
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Credits
+
+Created by [zaye.dev](https://zaye.dev)
+
+Built with:
+- [Obsidian API](https://github.com/obsidianmd/obsidian-api)
+- [OpenAI Agents SDK](https://github.com/openai/agents-sdk)
+- [Model Context Protocol](https://modelcontextprotocol.io)
+- [Hono.js](https://hono.dev)
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/ianyimi/obsidian-agents-server/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ianyimi/obsidian-agents-server/discussions)
+
+---
+
+**Note**: This plugin is in active development. Features and APIs may change. Please report any bugs or feature requests through GitHub Issues.
