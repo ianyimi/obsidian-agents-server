@@ -21,6 +21,7 @@ import { convertMessagesToAgentInput, convertRunResultToCompletion, convertStrea
 import { createVaultTools } from "~/tools/vault";
 import { AgentTool } from "~/tools/types";
 import { MCPManager } from "./mcp";
+import { AppWithPlugins } from "./tools/plugin-utils";
 
 export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
@@ -42,7 +43,7 @@ export default class ObsidianAgentsServer extends Plugin {
 		this.mcpManager = new MCPManager(this)
 		await this.mcpManager.initializeServers()
 
-		this.agents = await this.initializeAgents()
+		await this.initializeAgents()
 		this.initializeServer()
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
@@ -102,7 +103,7 @@ export default class ObsidianAgentsServer extends Plugin {
 			if (!modelProvider?.instance) continue
 			const model = aisdk(modelProvider.instance(agent.model))
 			const tools = await this.getAgentTools(agent)
-			this.agents[agent.id] = new Agent({
+			agents[agent.id] = new Agent({
 				name: agent.name,
 				instructions: agent.instructions,
 				model,
@@ -111,9 +112,9 @@ export default class ObsidianAgentsServer extends Plugin {
 		}
 		this.settings.agents.forEach(agentSettings => {
 			if (agentSettings.agentTools.length > 0) {
-				const updatedAgent = this.agents[agentSettings.id]
+				const updatedAgent = agents[agentSettings.id]
 				agentSettings.agentTools.forEach(agentToolID => {
-					const agentTool = this.agents[agentToolID]
+					const agentTool = agents[agentToolID]
 					const agentToolSettings = this.settings.agents.find(a => a.id === agentToolID)
 					if (!agentToolSettings) return
 					updatedAgent.tools.push(agentTool.asTool({
@@ -121,10 +122,12 @@ export default class ObsidianAgentsServer extends Plugin {
 						toolDescription: agentToolSettings.toolDescription
 					}))
 				})
-				this.agents[agentSettings.id] = updatedAgent
+				agents[agentSettings.id] = updatedAgent
 			}
 		})
-		return agents
+		this.agents = agents
+		console.log('agents: ', this.agents)
+		console.log('appPlugins: ', (this.app as AppWithPlugins))
 	}
 
 	initializeTools(): AgentTool[] {
@@ -183,7 +186,7 @@ export default class ObsidianAgentsServer extends Plugin {
 
 		app.use("/*", cors())
 
-		app.get("/v1/models", (c) => {
+		app.get("/v1/models", async (c) => {
 			const models = Object.values(this.agents).map((agent) => ({
 				id: agent.name,
 				object: "model",
@@ -280,6 +283,7 @@ export default class ObsidianAgentsServer extends Plugin {
 		await this.stopServer();
 		// Small delay to ensure port is fully released by OS
 		await new Promise(resolve => setTimeout(resolve, 100));
+		await this.initializeAgents()
 		this.initializeServer();
 		new Notice(`Server Restarted at http://localhost:${this.settings.serverPort}`)
 	}

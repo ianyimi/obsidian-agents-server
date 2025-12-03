@@ -52,18 +52,9 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 			restartServer: false
 		},
 		onSubmit: async ({ value }) => {
-			let reloadServer = false
-			if (value.agents.length !== plugin.settings.agents.length) {
-				reloadServer = true
-			}
-
 			plugin.settings.agents = value.agents
 			await plugin.saveSettings()
-			if (reloadServer || value.restartServer) {
-				await plugin.restartServer()
-				form.setFieldValue("restartServer", false)
-			}
-			new Notice("Settings Updated!")
+			await plugin.restartServer()
 		}
 	})
 

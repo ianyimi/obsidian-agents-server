@@ -25,6 +25,10 @@ export const SUPPORTED_PLUGINS = {
 	templater: {
 		id: "templater-obsidian",
 		label: "Templater"
+	},
+	omnisearch: {
+		id: "omnisearch",
+		label: "Omnisearch"
 	}
 } as const
 export type SupportedPlugin = typeof SUPPORTED_PLUGINS[keyof typeof SUPPORTED_PLUGINS]

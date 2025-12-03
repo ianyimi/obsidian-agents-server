@@ -20,9 +20,7 @@ export default function MCPServerSettings({ plugin }: { plugin: ObsidianAgentsSe
 
 			await plugin.mcpManager.initializeServers()
 
-			plugin.agents = await plugin.initializeAgents()
-
-			new Notice("MCP Servers Updated!")
+			await plugin.restartServer()
 		}
 	})
 

@@ -34,6 +34,7 @@ export interface ObsidianAgentsServerSettings {
 	modelProviders: ModelProviderSettings[]
 	mcpServers: MCPServerConfig[]
 	customToolsFolder?: string
+	agentDocsFolder?: string
 	agents: AgentSettings[]
 }
 
@@ -44,7 +45,8 @@ export const DEFAULT_SETTINGS: ObsidianAgentsServerSettings = {
 	modelProviders: [],
 	serverPort: 2345,
 	agents: [],
-	mcpServers: []
+	mcpServers: [],
+	agentDocsFolder: "Agent Docs"
 }
 
 

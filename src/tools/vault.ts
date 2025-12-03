@@ -2,24 +2,21 @@ import { type Tool, tool } from "@openai/agents"
 import { z } from "zod"
 import ObsidianAgentsServer from ".."
 import { ModifyFileOptionsSchema, AgentTool, SupportedPlugin, SUPPORTED_PLUGINS } from "./types"
-import { templaterApi } from "./plugin-utils"
+import { omnisearchApi, templaterApi } from "./plugin-utils"
+import { prepareFuzzySearch } from "obsidian"
 
 export const VAULT_TOOLS = {
 	countNotes: {
 		id: "count_notes",
 		label: "Count Notes"
 	},
-	readFile: {
-		id: "read_file",
-		label: "Read File"
-	},
 	createFile: {
 		id: "create_file",
 		label: "Create File"
 	},
-	createFileFromTemplate: {
-		id: "create_file_from_template",
-		label: "Create File From Template"
+	readFile: {
+		id: "read_file",
+		label: "Read File"
 	},
 	updateFile: {
 		id: "update_file",
@@ -29,6 +26,15 @@ export const VAULT_TOOLS = {
 		id: "delete_file",
 		label: "Delete File"
 	},
+	createFileFromTemplate: {
+		id: "create_file_from_template",
+		label: "Create File From Template"
+	},
+
+	omniSearch: {
+		id: "omni_search",
+		label: "Search Files"
+	}
 } as const
 export type VaultToolsID = typeof VAULT_TOOLS[keyof typeof VAULT_TOOLS]["id"]
 
@@ -53,7 +59,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
 				parameters: z.object({}),
 				async execute() {
 					const files = plugin.app.vault.getMarkdownFiles()
-					return files.length
+					return String(files.length)
 				}
 			})
 		}),
@@ -74,7 +80,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
 						mtime: options.mtime ?? undefined,
 						ctime: options.ctime ?? undefined
 					}
-					return plugin.app.vault.create(path, data, typedOptions)
+					return await plugin.app.vault.create(path, data, typedOptions)
 				}
 			})
 		}),
@@ -162,7 +168,29 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
 					)
 				}
 			})
-		})
+		}),
 
+		vaultTool({
+			id: VAULT_TOOLS.omniSearch.id,
+			plugins: [SUPPORTED_PLUGINS.omnisearch],
+			tool: tool({
+				name: VAULT_TOOLS.omniSearch.id,
+				description: "Search vault content for files that contain the search query",
+				parameters: z.object({
+					query: z.string(),
+					limit: z.number().default(20)
+				}),
+				async execute({ query, limit }) {
+					const omnisearch = omnisearchApi(plugin)
+					const results = await omnisearch.search(query)
+					const limitedResults = results.slice(0, limit)
+					console.log('limited searchRes: ', limit, limitedResults)
+					return JSON.stringify({
+						total: results.length,
+						files: limitedResults
+					})
+				}
+			})
+		})
 	]
 }

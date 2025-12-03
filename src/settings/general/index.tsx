@@ -11,7 +11,8 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 		defaultValues: {
 			deviceID: plugin.settings.deviceID,
 			controlDeviceID: plugin.settings.controlDeviceID,
-			serverPort: plugin.settings.serverPort
+			serverPort: plugin.settings.serverPort,
+			agentDocsFolder: plugin.settings.agentDocsFolder || "Agent Docs"
 		},
 		onSubmit: async ({ value }) => {
 			if (value.serverPort !== plugin.settings.serverPort) {
@@ -20,6 +21,7 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 			}
 			plugin.settings.controlDeviceID = value.controlDeviceID
 			plugin.settings.serverPort = value.serverPort
+			plugin.settings.agentDocsFolder = value.agentDocsFolder
 			await plugin.saveSettings()
 		}
 	})
@@ -67,6 +69,15 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 								type: "number",
 								onChange: (e) => field.handleChange(Number(e.target.value))
 							}}
+						/>
+					}
+				/>
+				<form.AppField
+					name="agentDocsFolder"
+					children={(field) =>
+						<field.TextField
+							label="Agent Docs Folder"
+							description="Folder path in your vault where agents store system documentation"
 						/>
 					}
 				/>
