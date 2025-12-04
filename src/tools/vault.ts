@@ -1,9 +1,10 @@
 import { type Tool, tool } from "@openai/agents"
 import { z } from "zod"
 import ObsidianAgentsServer from ".."
-import { ModifyFileOptionsSchema, AgentTool, SupportedPlugin, SUPPORTED_PLUGINS } from "./types"
+import { ModifyFileOptionsSchema, AgentTool, SupportedPlugin, SUPPORTED_PLUGINS, TOOL_TYPES } from "./types"
 import { omnisearchApi, templaterApi } from "./plugin-utils"
-import { prepareFuzzySearch } from "obsidian"
+import { AgentSettings, agentSettingsSchema } from "~/agents/types"
+import { nanoid } from "nanoid"
 
 export const VAULT_TOOLS = {
 	countNotes: {
@@ -34,6 +35,23 @@ export const VAULT_TOOLS = {
 	omniSearch: {
 		id: "omni_search",
 		label: "Search Files"
+	},
+
+	createAgent: {
+		id: "create_agent",
+		label: "Create Agent"
+	},
+	getAgentsSettings: {
+		id: "get_agents_settings",
+		label: "Get Agents Settings"
+	},
+	updateAgentsSettings: {
+		id: "update_agents_settings",
+		label: "Update Agents Settings"
+	},
+	restartAgentsServer: {
+		id: "restart_agents_server",
+		label: "Restart Server"
 	}
 } as const
 export type VaultToolsID = typeof VAULT_TOOLS[keyof typeof VAULT_TOOLS]["id"]
@@ -170,6 +188,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
 			})
 		}),
 
+		// omniSearch
 		vaultTool({
 			id: VAULT_TOOLS.omniSearch.id,
 			plugins: [SUPPORTED_PLUGINS.omnisearch],
@@ -189,6 +208,79 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
 						total: results.length,
 						files: limitedResults
 					})
+				}
+			})
+		}),
+
+		// getAgentsSettings
+		vaultTool({
+			id: VAULT_TOOLS.getAgentsSettings.id,
+			tool: tool({
+				name: VAULT_TOOLS.getAgentsSettings.id,
+				description: "Get settings for all agents",
+				parameters: z.object({}),
+				async execute() {
+					return plugin.settings.agents
+				}
+			})
+		}),
+
+		// updateAgentsSettings
+		vaultTool({
+			id: VAULT_TOOLS.updateAgentsSettings.id,
+			tool: tool({
+				name: VAULT_TOOLS.updateAgentsSettings.id,
+				description: "Update the settings for a specific agent",
+				parameters: z.object({
+					agentID: z.string(),
+					data: agentSettingsSchema
+				}),
+				async execute({ agentID, data }) {
+					plugin.settings.agents = plugin.settings.agents.map(agent => {
+						if (agent.id !== agentID) return agent;
+						const mcpTools = data.mcpTools.map(mcp => ({
+							...mcp,
+							toolsID: Object.values(TOOL_TYPES).filter(t => mcp.toolsID.includes(t.id)!)
+						}))
+						return { id: agentID, ...data, mcpTools } as unknown as AgentSettings
+					})
+					await plugin.saveSettings()
+					await plugin.restartServer()
+				}
+			})
+		}),
+
+		// createAgent
+		vaultTool({
+			id: VAULT_TOOLS.createAgent.id,
+			tool: tool({
+				name: VAULT_TOOLS.createAgent.id,
+				description: "Create a new Agent in the plugin settings",
+				parameters: z.object({
+					data: agentSettingsSchema
+				}),
+				async execute({ data }) {
+					const mcpTools = data.mcpTools.map(mcp => ({
+						...mcp,
+						toolsID: Object.values(TOOL_TYPES).filter(t => mcp.toolsID.includes(t.id)!)
+					}))
+					const newAgent = { id: nanoid(), ...data, mcpTools } as unknown as AgentSettings
+					plugin.settings.agents.push(newAgent)
+					await plugin.saveSettings()
+					await plugin.restartServer()
+				}
+			})
+		}),
+
+		// restartAgentsServer
+		vaultTool({
+			id: VAULT_TOOLS.restartAgentsServer.id,
+			tool: tool({
+				name: VAULT_TOOLS.restartAgentsServer.id,
+				description: "Create a new Agent in the plugin settings",
+				parameters: z.object({}),
+				async execute() {
+					await plugin.restartServer()
 				}
 			})
 		})
