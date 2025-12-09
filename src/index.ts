@@ -27,7 +27,7 @@ export default class ObsidianAgentsServer extends Plugin {
 	settings: ObsidianAgentsServerSettings;
 	isControlDevice: boolean = false;
 	modelProviders: ModelProvider[] = []
-	agents: Record<string, Agent> = {}
+	agents: Record<string, { settings: AgentSettings, instance: Agent }> = {}
 	runner: Runner = new Runner({ tracingDisabled: true })
 	honoApp?: Hono
 	server?: ServerType
@@ -91,33 +91,38 @@ export default class ObsidianAgentsServer extends Plugin {
 
 	async saveSettings(options?: { hideNotice: boolean }) {
 		await this.saveData(this.settings);
+		await this.initializeAgents();
 		if (options?.hideNotice) return;
 		new Notice("Settings Saved!")
 	}
 
 	async initializeAgents() {
-		const agents: Record<string, Agent> = {}
-		for (const agent of this.settings.agents) {
-			if (!agent.enabled) continue
-			const modelProvider = this.modelProviders.find(mp => mp.id === agent.modelProvider)
+		const agents: Record<string, { settings: AgentSettings, instance: Agent }> = {}
+		for (const agentSettings of this.settings.agents) {
+			if (!agentSettings.enabled) continue
+			const modelProvider = this.modelProviders.find(mp => mp.id === agentSettings.modelProvider)
 			if (!modelProvider?.instance) continue
-			const model = aisdk(modelProvider.instance(agent.model))
-			const tools = await this.getAgentTools(agent)
-			agents[agent.id] = new Agent({
-				name: agent.name,
-				instructions: agent.instructions,
-				model,
-				tools
-			})
+			const model = aisdk(modelProvider.instance(agentSettings.model))
+			const tools = await this.getAgentTools(agentSettings)
+			agents[agentSettings.id] = {
+				settings: agentSettings,
+				instance: new Agent({
+					name: agentSettings.name,
+					instructions: agentSettings.instructions,
+					model,
+					tools
+				})
+			}
 		}
+		this.agents = agents
+		// add agents as tools in second for loop after agents have been created
 		this.settings.agents.forEach(agentSettings => {
 			if (agentSettings.agentTools.length > 0) {
 				const updatedAgent = agents[agentSettings.id]
 				agentSettings.agentTools.forEach(agentToolID => {
-					const agentTool = agents[agentToolID]
-					const agentToolSettings = this.settings.agents.find(a => a.id === agentToolID)
-					if (!agentToolSettings) return
-					updatedAgent.tools.push(agentTool.asTool({
+					const agentTool = agents[agentToolID].instance
+					const agentToolSettings = this.agents[agentToolID].settings
+					updatedAgent.instance.tools.push(agentTool.asTool({
 						toolName: agentToolSettings.toolName,
 						toolDescription: agentToolSettings.toolDescription
 					}))
@@ -188,12 +193,12 @@ export default class ObsidianAgentsServer extends Plugin {
 
 		app.get("/v1/models", async (c) => {
 			const models = Object.values(this.agents).map((agent) => ({
-				id: agent.name,
+				id: agent.instance.name,
 				object: "model",
 				created: Date.now(),
 				owned_by: "obsidian-agents-server",
 				permission: [],
-				root: agent.name,
+				root: agent.instance.name,
 				parent: null
 			}))
 			return c.json({
@@ -207,11 +212,11 @@ export default class ObsidianAgentsServer extends Plugin {
 				const body = await c.req.json() as CreateChatCompletionBody
 				const { model, messages, stream = false } = body
 
-				const agent = Object.values(this.agents).find(a => a.name === model)
+				const agent = Object.values(this.agents).find(a => a.instance.name === model)
 				if (!agent) {
 					return c.json({
 						error: {
-							message: `Model '${model}' not found. Available models: ${Object.values(this.agents).map(a => a.name).join(', ')}`,
+							message: `Model '${model}' not found. Available models: ${Object.values(this.agents).map(a => a.instance.name).join(', ')}`,
 							type: "invalid_request_error"
 						}
 					}, 404)
@@ -220,7 +225,7 @@ export default class ObsidianAgentsServer extends Plugin {
 				const agentMessages = convertMessagesToAgentInput(messages);
 
 				if (stream) {
-					const result = await this.runner.run(agent, agentMessages, { stream: true });
+					const result = await this.runner.run(agent.instance, agentMessages, { stream: true });
 
 					return streamSSE(c, async (stream) => {
 						try {
@@ -238,7 +243,7 @@ export default class ObsidianAgentsServer extends Plugin {
 					});
 				}
 
-				const result = await this.runner.run(agent, agentMessages);
+				const result = await this.runner.run(agent.instance, agentMessages);
 				const response = convertRunResultToCompletion(result, model);
 				return c.json(response)
 
