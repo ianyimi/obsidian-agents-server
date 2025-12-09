@@ -1,10 +1,9 @@
 import { Button } from "~/components/ui/button";
 import ObsidianAgentsServer from "~/index";
-import { Notice } from "obsidian";
 import { Activity, useEffect, useState } from "react";
 import { Loader2Icon, Trash } from "lucide-react";
-import { ModelProviderID } from "~/models/providers/constants";
-import { SelectGroup, SelectItem } from "~/components/ui/select";
+import { MODEL_PROVIDERS, ModelProviderID, ModelProviderLabel } from "~/models/providers/constants";
+import { SelectGroup, SelectItem, SelectLabel } from "~/components/ui/select";
 import { useAppForm } from "~/components/form"
 import { nanoid } from "nanoid";
 import { TOOL_TYPES } from "~/tools/types";
@@ -16,7 +15,7 @@ import { Checkbox } from "~/components/ui/checkbox";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion";
 
 export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServer }) {
-	const [models, setModels] = useState<{ id: string, provider: ModelProviderID }[]>([])
+	const [modelsByProvider, setModelsByProvider] = useState<{ id: ModelProviderID, models: { id: string, provider: ModelProviderID }[] }[]>([])
 	const vaultToolsArray = Object.values(VAULT_TOOLS).map(t => t.id)
 	const mcpServers = Array.from(plugin.mcpManager.servers.values())
 	const { data: mcpServerTools, isPending: pendingServerTools } = useQuery({
@@ -35,15 +34,20 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 	})
 
 	useEffect(() => {
-		const allModels: { id: string, provider: ModelProviderID }[] = []
+		const allModelsByProvider: { id: ModelProviderID, models: { id: string, provider: ModelProviderID, providerLabel: ModelProviderLabel }[] }[] = []
 		plugin.modelProviders.forEach(p => {
+			const providerModels: { id: string, provider: ModelProviderID, providerLabel: ModelProviderLabel }[] = []
 			p.models.forEach(model => {
-				if (!allModels.find(m => m.id === model)) {
-					allModels.push({ id: model, provider: p.id })
+				if (!providerModels.find(m => m.id === model)) {
+					providerModels.push({ id: model, provider: p.id, providerLabel: MODEL_PROVIDERS[p.id].label })
 				}
 			})
+			allModelsByProvider.push({
+				id: p.id,
+				models: providerModels
+			})
 		})
-		setModels(allModels)
+		setModelsByProvider(allModelsByProvider)
 	}, [plugin.modelProviders])
 
 	const form = useAppForm({
@@ -57,6 +61,20 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 			await plugin.restartServer()
 		}
 	})
+
+	function reloadModels() {
+		const allModels: { id: string, provider: ModelProviderID }[] = []
+		plugin.modelProviders.forEach((provider) => {
+			provider.getModels().then(models => {
+				models.forEach(model => {
+					if (!allModels.find(m => m.id === model)) {
+						allModels.push({ id: model, provider: provider.id })
+					}
+				})
+			})
+		})
+		console.log('allModels: ', allModels)
+	}
 
 	return (
 		<form.AppForm>
@@ -111,19 +129,24 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
 											{(subField) => (
 												<subField.SelectField label="Model" placeholder="Select Model" onValueChange={(value) => {
 													subField.handleChange(value)
-													const model = models.find(m => m.id === value)
-													if (model) {
-														if (subField.state.value !== value) {
-															form.setFieldValue("restartServer", true)
+													modelsByProvider.forEach(mp => {
+														const model = mp.models.find(m => m.id === value)
+														if (model) {
+															if (subField.state.value !== value) {
+																form.setFieldValue("restartServer", true)
+															}
+															form.setFieldValue(`agents[${i}].modelProvider`, mp.id)
 														}
-														form.setFieldValue(`agents[${i}].modelProvider`, model.provider)
-													}
+													})
 												}}>
-													<SelectGroup>
-														{models.map((model, i) => (
-															<SelectItem key={i} value={model.id}>{model.id}</SelectItem>
-														))}
-													</SelectGroup>
+													{modelsByProvider.map((provider, j) => (
+														<SelectGroup key={`${j}-provider-${provider.id}-models`}>
+															<SelectLabel className="text-center">{MODEL_PROVIDERS[provider.id].label}</SelectLabel>
+															{provider.models.sort((m1, m2) => m1.id < m2.id ? 1 : -1).map((model, k) => (
+																<SelectItem key={`provider-${provider.id}-model-${model.id}-${k}`} value={model.id}>{model.id}</SelectItem>
+															))}
+														</SelectGroup>
+													))}
 												</subField.SelectField>
 											)}
 										</form.AppField>

@@ -897,6 +897,13 @@ video {
 .bg-blue-200\/50 {
   background-color: rgb(191 219 254 / 0.5);
 }
+.bg-inherit {
+  background-color: inherit;
+}
+.bg-red-200 {
+  --tw-bg-opacity: 1;
+  background-color: rgb(254 202 202 / var(--tw-bg-opacity, 1));
+}
 .p-0 {
   padding: 0px;
 }

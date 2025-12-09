@@ -21,11 +21,11 @@ importers:
         specifier: ^1.23.0
         version: 1.23.0(zod@3.25.76)
       '@openai/agents':
-        specifier: ^0.3.3
-        version: 0.3.3(ws@8.18.3)(zod@3.25.76)
+        specifier: ^0.3.4
+        version: 0.3.4(ws@8.18.3)(zod@3.25.76)
       '@openai/agents-extensions':
-        specifier: ^0.3.3
-        version: 0.3.3(@openai/agents@0.3.3(ws@8.18.3)(zod@3.25.76))(ws@8.18.3)(zod@3.25.76)
+        specifier: ^0.3.4
+        version: 0.3.4(@openai/agents@0.3.4(ws@8.18.3)(zod@3.25.76))(ws@8.18.3)(zod@3.25.76)
       '@radix-ui/react-accordion':
         specifier: ^1.2.12
         version: 1.2.12(@types/react-dom@19.2.3(@types/react@19.2.6))(@types/react@19.2.6)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -65,6 +65,9 @@ importers:
       cmdk:
         specifier: ^1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.6))(@types/react@19.2.6)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      gpt-tokenizer:
+        specifier: ^3.4.0
+        version: 3.4.0
       hono:
         specifier: ^4.10.6
         version: 4.10.6
@@ -704,33 +707,33 @@ packages:
     resolution: {integrity: sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg==}
     engines: {node: '>= 8'}
 
-  '@openai/agents-core@0.3.3':
-    resolution: {integrity: sha512-MlF70Vcjmi7rMlU00bBjes7DxM3IzcFlmpN0/f8fDKVuLKnqPy+dZRCpX+eNbPrJ4xg14Hmx3LgulNvzxgZx2g==}
+  '@openai/agents-core@0.3.4':
+    resolution: {integrity: sha512-PytKxI6JBkz+i2wgFwyT0C7jhMULwMamvRkXb+vdnpDxkf9hnFwkyeQB+u4FjdnOb1S+P2ohkXHcGZlVCQ11WA==}
     peerDependencies:
       zod: ^3.25.40 || ^4.0
     peerDependenciesMeta:
       zod:
         optional: true
 
-  '@openai/agents-extensions@0.3.3':
-    resolution: {integrity: sha512-oQh4H2LhpxwZc+OK8UlDwHnadRC7hg1142pDspUGMR9hef6X8eKdsHqiPCOeKoL21QQ4S4edE1N6d2slJBdvLA==}
+  '@openai/agents-extensions@0.3.4':
+    resolution: {integrity: sha512-erBHurQSbdrsotzC1r3wcgpONzwLM10l9T/7xc4zZEI0Ec2hRne5pXEb9jIK9GmuoF09c6ySPK1InMxczAUYYQ==}
     peerDependencies:
       '@openai/agents': '>=0.0.0'
       ws: ^8.18.1
       zod: ^3.25.40 || ^4.0
 
-  '@openai/agents-openai@0.3.3':
-    resolution: {integrity: sha512-uxXXVWTEhQrZOKUUp/gTQ85176/6kR2CnEMDjSnjOacMzwybXo5IkreBrZh2BmhseTpOvQIek57UV+z344mTvw==}
+  '@openai/agents-openai@0.3.4':
+    resolution: {integrity: sha512-Bl7IrJw9uhuFQ/YYWhRaM9wN/+RBQTMNuXr+WGfBqvkD2RxndM7dh5oH0oRN0VAN4qqn9OA351x65g9oHHfrIA==}
     peerDependencies:
       zod: ^3.25.40 || ^4.0
 
-  '@openai/agents-realtime@0.3.3':
-    resolution: {integrity: sha512-Rv7qqBIuerjZtMmI4YdXcz7mQ7bymIcmGjza0WbLLzF/D9ax0b/trvFaKnfM/YE/9nKHd5N6IgwYLlH4xV/UGw==}
+  '@openai/agents-realtime@0.3.4':
+    resolution: {integrity: sha512-qGjctIE7B3S9zbehwvJPF3WhEnki7pcdPfELSoB2WrluJf7Er4KUjUnrmCDUiSM2702OnNLV/5JPo1UcTNO2dQ==}
     peerDependencies:
       zod: ^3.25.40 || ^4.0
 
-  '@openai/agents@0.3.3':
-    resolution: {integrity: sha512-jLqvY/l7w0QbUkyUUHaKl3VPDwBewjWRpiwV8hnYAFfGSwKR2K0WA9RjcC56qmhuQ7pB5NAkDVM82v3urOnMRg==}
+  '@openai/agents@0.3.4':
+    resolution: {integrity: sha512-QnYrvBgppJ2djlr5ia+eUwfGeE0hvo70OONdOtPHmYNzqKCprRNdnEVb41X5232LPQOFbvwENmACEkrnWbCvdA==}
     peerDependencies:
       zod: ^3.25.40 || ^4.0
 
@@ -2661,6 +2664,9 @@ packages:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
     engines: {node: '>= 0.4'}
 
+  gpt-tokenizer@3.4.0:
+    resolution: {integrity: sha512-wxFLnhIXTDjYebd9A9pGl3e31ZpSypbpIJSOswbgop5jLte/AsZVDvjlbEuVFlsqZixVKqbcoNmRlFDf6pz/UQ==}
+
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
@@ -4086,7 +4092,7 @@ snapshots:
       '@nodelib/fs.scandir': 2.1.5
       fastq: 1.19.1
 
-  '@openai/agents-core@0.3.3(ws@8.18.3)(zod@3.25.76)':
+  '@openai/agents-core@0.3.4(ws@8.18.3)(zod@3.25.76)':
     dependencies:
       debug: 4.4.3
       openai: 6.9.1(ws@8.18.3)(zod@3.25.76)
@@ -4098,11 +4104,11 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-extensions@0.3.3(@openai/agents@0.3.3(ws@8.18.3)(zod@3.25.76))(ws@8.18.3)(zod@3.25.76)':
+  '@openai/agents-extensions@0.3.4(@openai/agents@0.3.4(ws@8.18.3)(zod@3.25.76))(ws@8.18.3)(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
-      '@openai/agents': 0.3.3(ws@8.18.3)(zod@3.25.76)
-      '@openai/agents-core': 0.3.3(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents': 0.3.4(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-core': 0.3.4(ws@8.18.3)(zod@3.25.76)
       '@types/ws': 8.18.1
       debug: 4.4.3
       ws: 8.18.3
@@ -4111,9 +4117,9 @@ snapshots:
       - '@cfworker/json-schema'
       - supports-color
 
-  '@openai/agents-openai@0.3.3(ws@8.18.3)(zod@3.25.76)':
+  '@openai/agents-openai@0.3.4(ws@8.18.3)(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.3.3(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-core': 0.3.4(ws@8.18.3)(zod@3.25.76)
       debug: 4.4.3
       openai: 6.9.1(ws@8.18.3)(zod@3.25.76)
       zod: 3.25.76
@@ -4122,9 +4128,9 @@ snapshots:
       - supports-color
       - ws
 
-  '@openai/agents-realtime@0.3.3(zod@3.25.76)':
+  '@openai/agents-realtime@0.3.4(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.3.3(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-core': 0.3.4(ws@8.18.3)(zod@3.25.76)
       '@types/ws': 8.18.1
       debug: 4.4.3
       ws: 8.18.3
@@ -4135,11 +4141,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@openai/agents@0.3.3(ws@8.18.3)(zod@3.25.76)':
+  '@openai/agents@0.3.4(ws@8.18.3)(zod@3.25.76)':
     dependencies:
-      '@openai/agents-core': 0.3.3(ws@8.18.3)(zod@3.25.76)
-      '@openai/agents-openai': 0.3.3(ws@8.18.3)(zod@3.25.76)
-      '@openai/agents-realtime': 0.3.3(zod@3.25.76)
+      '@openai/agents-core': 0.3.4(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-openai': 0.3.4(ws@8.18.3)(zod@3.25.76)
+      '@openai/agents-realtime': 0.3.4(zod@3.25.76)
       debug: 4.4.3
       openai: 6.9.1(ws@8.18.3)(zod@3.25.76)
       zod: 3.25.76
@@ -6600,6 +6606,8 @@ snapshots:
       slash: 3.0.0
 
   gopd@1.2.0: {}
+
+  gpt-tokenizer@3.4.0: {}
 
   graceful-fs@4.2.11: {}
 

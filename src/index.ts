@@ -9,6 +9,7 @@ import { nanoid } from "nanoid";
 import { MODEL_PROVIDERS } from "~/models/providers/constants";
 import { ModelProvider } from "~/models/providers";
 import { LMStudio } from "~/models/providers/lmstudio";
+import { OpenAI } from "~/models/providers/openai";
 import { aisdk } from "@openai/agents-extensions";
 
 import { Hono } from "hono";
@@ -101,8 +102,18 @@ export default class ObsidianAgentsServer extends Plugin {
 		for (const agentSettings of this.settings.agents) {
 			if (!agentSettings.enabled) continue
 			const modelProvider = this.modelProviders.find(mp => mp.id === agentSettings.modelProvider)
-			if (!modelProvider?.instance) continue
-			const model = aisdk(modelProvider.instance(agentSettings.model))
+			if (!modelProvider) continue
+
+			// OpenAI is natively supported by the SDK, so we pass the model string directly
+			// Other providers need to be wrapped with aisdk()
+			let model: any
+			if (modelProvider.id === MODEL_PROVIDERS.openai.id) {
+				model = agentSettings.model
+			} else {
+				if (!modelProvider.instance) continue
+				model = aisdk(modelProvider.instance(agentSettings.model))
+			}
+
 			const tools = await this.getAgentTools(agentSettings)
 			agents[agentSettings.id] = {
 				settings: agentSettings,
@@ -169,8 +180,11 @@ export default class ObsidianAgentsServer extends Plugin {
 		const providers = []
 		for (const provider of this.settings.modelProviders) {
 			switch (provider.id) {
+				case MODEL_PROVIDERS.openai.id:
+					providers.push(new OpenAI(this, provider))
+					break;
 				case MODEL_PROVIDERS.lmstudio.id:
-					providers.push(new LMStudio(this))
+					providers.push(new LMStudio(this, provider))
 					break;
 				default:
 					break;
@@ -182,9 +196,15 @@ export default class ObsidianAgentsServer extends Plugin {
 	initializeServer() {
 		// Skip if server is already running
 		if (this.server) {
-			console.log('Server already running on port', this.settings.serverPort);
+			console.warn('[Server] Server reference already exists, attempting to stop first...');
+			// Try to stop it before proceeding
+			this.stopServer().then(() => {
+				setTimeout(() => this.initializeServer(), 1000);
+			});
 			return;
 		}
+
+		console.log(`[Server] Initializing on port ${this.settings.serverPort}...`);
 
 		const app = new Hono();
 		this.honoApp = app;
@@ -227,6 +247,8 @@ export default class ObsidianAgentsServer extends Plugin {
 				if (stream) {
 					const result = await this.runner.run(agent.instance, agentMessages, { stream: true });
 
+					console.log(`result usage: ${JSON.stringify(result.state._context.usage)}`)
+
 					return streamSSE(c, async (stream) => {
 						try {
 							for await (const chunk of convertStreamToChunks(result, model)) {
@@ -268,54 +290,77 @@ export default class ObsidianAgentsServer extends Plugin {
 			this.server.on?.('error', (err: NodeJS.ErrnoException) => {
 				if (err.code === 'EADDRINUSE') {
 					new Notice(`Port ${this.settings.serverPort} is already in use. Please choose a different port.`);
-					console.error(`Port ${this.settings.serverPort} is already in use`);
+					console.error(`[Server] Port ${this.settings.serverPort} is already in use`);
+
+					// Actually close the server, don't just clear the reference
+					const serverToClose = this.server;
 					this.server = undefined;
+
+					if (serverToClose) {
+						serverToClose.close((closeErr) => {
+							if (closeErr) {
+								console.error('[Server] Error closing server after port conflict:', closeErr);
+							} else {
+								console.log('[Server] Closed server after port conflict');
+							}
+						});
+					}
 				} else {
-					console.error('Server error:', err);
+					console.error('[Server] Server error:', err);
 				}
 			});
 
 			this.server.on?.('listening', () => {
-				console.log(`Server started on port ${this.settings.serverPort}`);
+				console.log(`[Server] Started successfully on port ${this.settings.serverPort}`);
 			});
 		} catch (e) {
-			console.log('error starting server: ', e)
+			console.error('[Server] Error starting server:', e)
 			new Notice('Failed to start server. Check console for details.');
 		}
 	}
 
 	async restartServer() {
+		console.log('[Server] Restarting...');
+
+		// Stop existing server
 		await this.stopServer();
-		// Small delay to ensure port is fully released by OS
-		await new Promise(resolve => setTimeout(resolve, 100));
+
+		// Wait for port to be released (increased to 1 second for reliability)
+		console.log('[Server] Waiting for port to be released...');
+		await new Promise(resolve => setTimeout(resolve, 1000));
+
+		// Reinitialize agents and start server
+		console.log('[Server] Reinitializing agents...');
 		await this.initializeAgents()
+
+		console.log('[Server] Starting server...');
 		this.initializeServer();
+
 		new Notice(`Server Restarted at http://localhost:${this.settings.serverPort}`)
 	}
 
 	async stopServer(): Promise<void> {
 		if (!this.server) {
+			console.log('[Server] No server to stop');
 			return;
 		}
 
+		const serverToClose = this.server;
+		this.server = undefined; // Clear reference immediately to prevent double-close
+
 		return new Promise<void>((resolve) => {
-			if (!this.server) {
-				return;
-			}
 			const timeout = setTimeout(() => {
-				console.warn('Server close timeout, forcing shutdown');
-				this.server = undefined;
+				console.warn('[Server] Close timeout, forcing shutdown');
 				resolve();
 			}, 5000);
 
-			this.server.close((err) => {
+			serverToClose.close((err) => {
 				clearTimeout(timeout);
 				if (err) {
-					console.error('Error closing server:', err);
+					console.error('[Server] Error closing server:', err);
 				} else {
-					console.log('Server closed successfully');
+					console.log('[Server] Closed successfully');
 				}
-				this.server = undefined;
 				resolve();
 			});
 		});

@@ -15,21 +15,25 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 			agentDocsFolder: plugin.settings.agentDocsFolder || "Agent Docs"
 		},
 		onSubmit: async ({ value }) => {
-			if (value.serverPort !== plugin.settings.serverPort) {
-				plugin.settings.serverPort = value.serverPort
-				plugin.restartServer()
-			}
+			const portChanged = value.serverPort !== plugin.settings.serverPort
+
+			// Update settings
 			plugin.settings.controlDeviceID = value.controlDeviceID
 			plugin.settings.serverPort = value.serverPort
 			plugin.settings.agentDocsFolder = value.agentDocsFolder
 			await plugin.saveSettings()
+
+			// Restart server if port changed (await to prevent race condition)
+			if (portChanged) {
+				await plugin.restartServer()
+			}
 		}
 	})
 
 	return (
 		<form.AppForm>
 			<div className="relative py-6">
-				<Button type="submit" className="right-0 absolute -top-11">Save</Button>
+				<Button type="submit" onClick={form.handleSubmit} className="right-0 absolute -top-11">Save</Button>
 				<form.Field
 					name="deviceID"
 					children={(field) => {
@@ -77,7 +81,7 @@ export default function GeneralSettings({ plugin }: { plugin: ObsidianAgentsServ
 					children={(field) =>
 						<field.TextField
 							label="Agent Docs Folder"
-							description="Folder path in your vault where agents store system documentation"
+						// description="Folder path in your vault where agents store system documentation"
 						/>
 					}
 				/>
