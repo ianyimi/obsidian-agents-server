@@ -331,6 +331,16 @@ export interface ChatCompletionChoice {
 }
 
 // ============================================================================
+// GET /v1/models - Get Models
+// ============================================================================
+
+export type GetModelsResponse = {
+  id: string;
+  object: string;
+  owned_by: string;
+}[]
+
+// ============================================================================
 // POST /v1/chat/completions - Create Chat Completion
 // ============================================================================
 
@@ -490,7 +500,7 @@ export interface UpdateChatCompletionBody {
   metadata: Record<string, string>;
 }
 
-export interface UpdateChatCompletionResponse extends GetChatCompletionResponse {}
+export interface UpdateChatCompletionResponse extends GetChatCompletionResponse { }
 
 // ============================================================================
 // DELETE /v1/chat/completions/{completion_id} - Delete Chat Completion

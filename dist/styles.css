@@ -603,9 +603,6 @@ video {
 .top-\[50\%\] {
   top: 50%;
 }
-.left-1\/2 {
-  left: 50%;
-}
 .z-50 {
   z-index: 50;
 }
@@ -616,10 +613,6 @@ video {
 .my-1 {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
-}
-.mx-auto {
-  margin-left: auto;
-  margin-right: auto;
 }
 .ml-auto {
   margin-left: auto;
@@ -799,9 +792,6 @@ video {
 .justify-between {
   justify-content: space-between;
 }
-.justify-items-center {
-  justify-items: center;
-}
 .gap-1 {
   gap: 0.25rem;
 }
@@ -824,9 +814,6 @@ video {
   --tw-space-y-reverse: 0;
   margin-top: calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));
   margin-bottom: calc(0.375rem * var(--tw-space-y-reverse));
-}
-.justify-self-center {
-  justify-self: center;
 }
 .overflow-hidden {
   overflow: hidden;
@@ -894,16 +881,6 @@ video {
 .bg-transparent {
   background-color: transparent;
 }
-.bg-blue-200\/50 {
-  background-color: rgb(191 219 254 / 0.5);
-}
-.bg-inherit {
-  background-color: inherit;
-}
-.bg-red-200 {
-  --tw-bg-opacity: 1;
-  background-color: rgb(254 202 202 / var(--tw-bg-opacity, 1));
-}
 .p-0 {
   padding: 0px;
 }
@@ -956,13 +933,13 @@ video {
   padding-top: 0.75rem;
   padding-bottom: 0.75rem;
 }
-.py-6 {
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-}
 .py-4 {
   padding-top: 1rem;
   padding-bottom: 1rem;
+}
+.py-6 {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
 }
 .pb-4 {
   padding-bottom: 1rem;

@@ -2,76 +2,27 @@ import { ModelProvider } from ".";
 import { MODEL_PROVIDERS, ModelProviderSettings } from "~/models/providers/constants";
 import ObsidianAgentsServer from "~/index";
 import { requestUrl } from "obsidian";
-import { createOpenAICompatible, OpenAICompatibleProvider } from "@ai-sdk/openai-compatible";
-import { encode, encodeChat } from "gpt-tokenizer"
-import { ChatCompletionMessage } from "~/agents/chatCompletionApiTypes";
-import { ChatMessage } from "gpt-tokenizer/esm/functionCalling";
-
-type GetModelsResponse = {
-	id: string;
-	object: string;
-	owned_by: string;
-}[]
+import { OpenAICompatibleProvider } from "@ai-sdk/openai-compatible";
+import { GetModelsResponse } from "~/agents/chatCompletionApiTypes";
 
 export class LMStudio extends ModelProvider {
-	id = MODEL_PROVIDERS.lmstudio.id;
-	baseURL = MODEL_PROVIDERS["lmstudio"].baseURL;
-	apiKeyRequired = MODEL_PROVIDERS["lmstudio"].apiKeyRequired;
-	models = [];
-	instance?: OpenAICompatibleProvider;
+  id = MODEL_PROVIDERS.lmstudio.id;
+  baseURL = MODEL_PROVIDERS["lmstudio"].baseURL;
+  apiKeyRequired = MODEL_PROVIDERS["lmstudio"].apiKeyRequired;
+  models = [];
+  instance?: OpenAICompatibleProvider;
 
-	constructor(plugin: ObsidianAgentsServer, providerSettings: ModelProviderSettings) {
-		// super calls both initializeProvider & 
-		super(plugin, providerSettings)
-	}
+  constructor(plugin: ObsidianAgentsServer, providerSettings: ModelProviderSettings) {
+    // super calls both initializeProvider & 
+    super(plugin, providerSettings)
+  }
 
-	async getModels() {
-		const res = await requestUrl(`${this.baseURL}/models`)
-		if (res.status === 200) {
-			const models = (res.json.data as GetModelsResponse).map(m => m.id)
-			return models
-		}
-		return []
-	}
-
-	createInstance() {
-		this.instance = createOpenAICompatible({
-			name: this.id,
-			baseURL: this.baseURL,
-			fetch: async (url: string | URL | Request, init?: RequestInit) => {
-				const urlString = typeof url === 'string' ? url : url instanceof URL ? url.toString() : url.url;
-
-				const response = await requestUrl({
-					url: urlString,
-					method: init?.method || 'GET',
-					headers: init?.headers as Record<string, string>,
-					body: init?.body as string,
-				});
-
-				return new Response(response.text, {
-					status: response.status,
-					headers: response.headers,
-				});
-			}
-		})
-	}
-
-	countTokens({ text, model }: { text: string, model?: string }) {
-		return encode(text).length
-	}
-	countMessages({ messages, model }: { messages: ChatCompletionMessage[]; model?: string; }): number {
-		const chatMessages: ChatMessage[] = messages.map(m => {
-			const content = typeof m.content === "string"
-				? m.content
-				: Array.isArray(m.content)
-					? m.content.map(part => "text" in part ? part.text : "").join("\n")
-					: ""
-			return {
-				role: m.role,
-				content
-			}
-		})
-		const tokens = encodeChat(chatMessages, "gpt-4")
-		return tokens.length
-	}
+  async getModels() {
+    const res = await requestUrl(`${this.baseURL}/models`)
+    if (res.status === 200) {
+      const models = (res.json.data as GetModelsResponse).map(m => m.id)
+      return models
+    }
+    return []
+  }
 }
