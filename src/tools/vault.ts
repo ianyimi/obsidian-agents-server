@@ -67,9 +67,8 @@ function vaultTool({ id, plugins = [], tool }: { id: VaultToolsID, plugins?: Sup
 
 type AgentRunContext = RunContext<{ agentSettings: AgentSettings }>
 function checkIncludedExcludedPaths({ path, context }: { path: string, context: AgentRunContext }) {
-  if (!context.context.agentSettings.includedFolders.some((inf) => path.includes(inf.path))) return false
-  if (context.context.agentSettings.excludedFolders.some((exf) => path.includes(exf.path))) return false
-  return true
+  if (!context.context.agentSettings.includedFolders.some((inf) => path.includes(inf.path))) throw new Error("Unauthorized to Access Files on this path")
+  if (context.context.agentSettings.excludedFolders.some((exf) => path.includes(exf.path))) throw new Error("Unauthorized to Access Files on this path")
 }
 
 export function createVaultTools(plugin: ObsidianAgentsServer) {
@@ -101,7 +100,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
           options: ModifyFileOptionsSchema
         }),
         async execute({ path, data, options }, context) {
-          if (!checkIncludedExcludedPaths({ path, context: context as AgentRunContext })) return false
+          checkIncludedExcludedPaths({ path, context: context as AgentRunContext })
           const typedOptions = {
             mtime: options.mtime ?? undefined,
             ctime: options.ctime ?? undefined
@@ -122,7 +121,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
           cache: z.boolean().default(false)
         }),
         async execute({ path, cache }, context) {
-          if (!checkIncludedExcludedPaths({ path, context: context as AgentRunContext })) return false
+          checkIncludedExcludedPaths({ path, context: context as AgentRunContext })
           const file = plugin.app.vault.getFileByPath(path)
           if (!file) throw new Error(`File not found: ${path}`)
           if (cache) return await plugin.app.vault.cachedRead(file)
@@ -143,7 +142,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
           options: ModifyFileOptionsSchema
         }),
         async execute({ path, data, options }, context) {
-          if (!checkIncludedExcludedPaths({ path, context: context as AgentRunContext })) return false
+          checkIncludedExcludedPaths({ path, context: context as AgentRunContext })
           const file = plugin.app.vault.getFileByPath(path)
           if (!file) throw new Error(`File not found: ${path}`)
           const typedOptions = {
@@ -166,7 +165,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
           force: z.boolean().default(false)
         }),
         async execute({ path, force }, context) {
-          if (!checkIncludedExcludedPaths({ path, context: context as AgentRunContext })) return false
+          checkIncludedExcludedPaths({ path, context: context as AgentRunContext })
           const file = plugin.app.vault.getFileByPath(path)
           if (!file) throw new Error(`File not found: ${path}`)
           return await plugin.app.vault.delete(file, force)
@@ -187,7 +186,7 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
           templateFilename: z.string()
         }),
         async execute({ newFilename, targetFolderPath, templateFilename }, context) {
-          if (!checkIncludedExcludedPaths({ path: targetFolderPath, context: context as AgentRunContext })) return false
+          checkIncludedExcludedPaths({ path: targetFolderPath, context: context as AgentRunContext })
           const { createFromTemplate, findTemplate } = templaterApi(plugin)
           const template = findTemplate(templateFilename)
           await createFromTemplate(
