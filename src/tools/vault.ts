@@ -67,8 +67,16 @@ function vaultTool({ id, plugins = [], tool }: { id: VaultToolsID, plugins?: Sup
 
 type AgentRunContext = RunContext<{ agentSettings: AgentSettings }>
 function checkIncludedExcludedPaths({ path, context }: { path: string, context: AgentRunContext }) {
-  if (!context.context.agentSettings.includedFolders.some((inf) => path.includes(inf.path))) throw new Error("Unauthorized to Access Files on this path")
-  if (context.context.agentSettings.excludedFolders.some((exf) => path.includes(exf.path))) throw new Error("Unauthorized to Access Files on this path")
+  if (context.context.agentSettings.includedFolders.length > 0) {
+    if (!context.context.agentSettings.includedFolders.some((inf) => path.includes(inf.path))) {
+      throw new Error("Unauthorized to Access Files on this path")
+    }
+  }
+  if (context.context.agentSettings.excludedFolders.length > 0) {
+    if (context.context.agentSettings.excludedFolders.some((exf) => path.includes(exf.path))) {
+      throw new Error("Unauthorized to Access Files on this path")
+    }
+  }
 }
 
 export function createVaultTools(plugin: ObsidianAgentsServer) {
