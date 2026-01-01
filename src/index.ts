@@ -235,7 +235,7 @@ export default class ObsidianAgentsServer extends Plugin {
         const agentMessages = convertMessagesToAgentInput(messages);
 
         if (stream) {
-          const result = await this.runner.run(agent.instance, agentMessages, { stream: true });
+          const result = await this.runner.run(agent.instance, agentMessages, { stream: true, context: { agentSettings: agent.settings } });
 
           return streamSSE(c, async (stream) => {
             try {
@@ -253,7 +253,7 @@ export default class ObsidianAgentsServer extends Plugin {
           });
         }
 
-        const result = await this.runner.run(agent.instance, agentMessages);
+        const result = await this.runner.run(agent.instance, agentMessages, { context: { agentSettings: agent.settings } });
         const response = convertRunResultToCompletion(result, model);
         return c.json(response)
 

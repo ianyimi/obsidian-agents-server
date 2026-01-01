@@ -139,7 +139,7 @@ export async function* convertStreamToChunks(
   const created = Math.floor(Date.now() / 1000);
 
   for await (const event of stream) {
-    console.log('event recorded, stream usage: ', JSON.parse(JSON.stringify(stream.state._context.usage)))
+    console.log('event recorded, stream usage: ', JSON.parse(JSON.stringify(stream.state._context.usage)), stream.history, stream)
     // Handle text deltas from model
     if (event.type === 'raw_model_stream_event' && event.data?.type === 'output_text_delta') {
       yield {

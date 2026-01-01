@@ -54,16 +54,27 @@ export class MCPManager {
 
 			try {
 				const server = await this.createServer(config)
-				await server.connect()
+
+				// Add timeout to prevent hanging offline (5 seconds)
+				const connectWithTimeout = Promise.race([
+					server.connect(),
+					new Promise((_, reject) =>
+						setTimeout(() => reject(new Error('Connection timeout - possibly offline')), 5000)
+					)
+				])
+
+				await connectWithTimeout
+
 				this.servers.set(config.id, {
 					id: config.id,
 					status: "connected",
 					server,
 					lastChecked: Date.now()
 				})
+				console.log(`[MCP] Connected to ${config.name}`)
 			} catch (err) {
 				const errorMessage = err instanceof Error ? err.message : String(err)
-				console.error(`[MCP] Failed to connect to ${config.name}: `, err)
+				console.warn(`[MCP] Failed to connect to ${config.name}: ${errorMessage}`)
 				this.servers.set(config.id, {
 					id: config.id,
 					status: "error",
@@ -73,6 +84,8 @@ export class MCPManager {
 				})
 			}
 		}
+
+		console.log(`[MCP] Initialization complete. Connected: ${Array.from(this.servers.values()).filter(s => s.status === 'connected').length}/${this.plugin.settings.mcpServers.length}`)
 	}
 
 	private convertStdioArgs(args: string) {

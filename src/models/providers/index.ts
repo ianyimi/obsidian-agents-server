@@ -21,17 +21,36 @@ export abstract class ModelProvider {
       this.id = provider.id
       this.baseURL = provider.baseURL
       this.plugin = plugin
+      this.models = [] // Initialize to empty array
       if (providerSettings.apiKey) {
         this.apiKey = providerSettings.apiKey
       }
       if (this.shouldCreateInstance()) {
         this.createInstance();
       }
-      this.getModels().then(models => {
-        this.models = models
-      }).catch(e => {
-        console.error('error fetching models: ', e)
-      })
+
+      // Fetch models with timeout - don't block initialization
+      this.fetchModelsWithTimeout();
+    }
+  }
+
+  private async fetchModelsWithTimeout() {
+    try {
+      // Race between getModels() and a timeout
+      const timeoutPromise = new Promise<string[]>((_, reject) =>
+        setTimeout(() => reject(new Error('Model fetch timeout')), 5000) // 5 second timeout
+      );
+
+      const models = await Promise.race([
+        this.getModels(),
+        timeoutPromise
+      ]);
+
+      this.models = models;
+      console.log(`[${this.id}] Successfully fetched ${models.length} models`);
+    } catch (e) {
+      console.warn(`[${this.id}] Failed to fetch models (offline or timeout):`, e);
+      this.models = []; // Fallback to empty array
     }
   }
 
