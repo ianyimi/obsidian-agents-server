@@ -229,7 +229,7 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
                                 {field.state.value?.map((inf, j) => (
                                   <div className="relative" key={j}>
                                     <form.AppField name={`agents[${i}].includedFolders.[${j}].path`}>
-                                      {(subField) => <subField.TextField label="Included Folder" />}
+                                      {(subField) => <subField.FolderPathField label="Included Folder" app={plugin.app} />}
                                     </form.AppField>
                                     <Trash
                                       size={16}
@@ -261,7 +261,7 @@ export default function AgentsSettings({ plugin }: { plugin: ObsidianAgentsServe
                                 {field.state.value?.map((exf, j) => (
                                   <div className="relative" key={j}>
                                     <form.AppField name={`agents[${i}].excludedFolders.[${j}].path`}>
-                                      {(subField) => <subField.TextField label="Excluded Folder" />}
+                                      {(subField) => <subField.FolderPathField label="Excluded Folder" app={plugin.app} />}
                                     </form.AppField>
                                     <Trash
                                       size={16}
