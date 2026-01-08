@@ -77,6 +77,7 @@ function checkIncludedExcludedPaths({ path, context }: { path: string, context: 
       throw new Error("Unauthorized to Access Files on this path")
     }
   }
+  return true
 }
 
 export function createVaultTools(plugin: ObsidianAgentsServer) {
@@ -218,11 +219,16 @@ export function createVaultTools(plugin: ObsidianAgentsServer) {
           query: z.string(),
           limit: z.number().default(20)
         }),
-        async execute({ query, limit }) {
+        async execute({ query, limit }, context) {
           const omnisearch = omnisearchApi(plugin)
-          const results = await omnisearch.search(query)
+          const results = (await omnisearch.search(query)).filter(r => {
+            try {
+              return checkIncludedExcludedPaths({ path: r.path, context: context as AgentRunContext })
+            } catch (e) {
+              return false
+            }
+          })
           const limitedResults = results.slice(0, limit)
-          console.log('limited searchRes: ', limit, limitedResults)
           return JSON.stringify({
             total: results.length,
             files: limitedResults
