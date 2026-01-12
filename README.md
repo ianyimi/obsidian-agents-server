@@ -414,8 +414,7 @@ obsidian-agents-server/
 
 ### Phase 0: Immediate Priority
 
-- [ ] **Conversation History & Sessions** - Persistent conversation storage per agent using SQLite with session management and export capabilities
-- [ ] **LM Studio Context Compaction** - Automatic context window management for local models with intelligent summarization and token-aware compaction
+- [ ] **LM Studio Context Compaction** - Stateless automatic context window management for local models with intelligent summarization and token-aware compaction (works with OpenWebUI and API clients)
 - [ ] **Obsidian LiveSync Integration** - Multi-device setup enabling one machine to run the server while others sync configuration with automatic plugin restart
 - [ ] **WebSocket Notification System** - Real-time notifications for agent completions, long-running tasks, and vault changes across LiveSync-connected devices
 - [ ] **Vector Search Foundation** - Integrate vector database (Qdrant/Chroma) for semantic search with document embeddings and vault content indexing
@@ -431,6 +430,8 @@ obsidian-agents-server/
 
 ### Phase 2: Polish & Optimization
 
+- [ ] **In-Plugin Chat Interface** - Native chat UI inside Obsidian for direct agent conversations with LiveSync integration for cross-device access
+- [ ] **Conversation History & Sessions** - Persistent conversation storage per agent using SQLite with session management across LiveSync-connected devices
 - [ ] **Obsidian Sync Integration** - Support for Obsidian's official sync service alongside LiveSync
 - [ ] **MCP Server Marketplace Integration** - Discovery UI for popular MCP servers with automated setup
 - [ ] **Agent Execution Monitoring** - Detailed logging with tool call traces, error tracking, and performance metrics
