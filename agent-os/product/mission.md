@@ -1,94 +1,130 @@
 # Product Mission
 
 ## Pitch
-Obsidian Agents Server is an intelligent multi-agent platform that transforms Obsidian into an AI-powered knowledge management system. It helps knowledge workers, developers, and power users manage their digital lives by providing autonomous AI agents that understand context, assist with vault organization, and enable natural language interaction with notes across all devices.
+Obsidian Agents Server is a multi-agent AI framework plugin that transforms Obsidian into a programmable AI platform. It helps knowledge workers, developers, and power users augment their workflows by providing customizable AI agents with direct vault access, extensible tool systems via MCP protocol, and an OpenAI-compatible API that enables universal client compatibility across all devices.
 
 ## Users
 
 ### Primary Customers
-- **Knowledge Workers**: Professionals managing complex information, projects, and personal knowledge bases
-- **Developers**: Technical users building and maintaining sophisticated note-taking systems
-- **Power Users**: Advanced Obsidian users seeking automation and AI-enhanced workflows
-- **Content Creators**: Writers, researchers, and creators organizing large volumes of information
+- **Knowledge Workers**: Professionals managing complex information, projects, and personal knowledge bases who want AI assistance deeply integrated with their notes
+- **Developers**: Technical users building custom AI workflows, automating vault operations, and integrating Obsidian with external tools and services
+- **Power Users**: Advanced Obsidian users seeking to compose sophisticated multi-agent workflows without prompt engineering
+- **AI Enthusiasts**: Users running local LLMs (LM Studio, Ollama) who want privacy-focused AI assistance without cloud dependencies
 
 ### User Personas
 
 **Alex, the Productivity Engineer** (28-45)
 - **Role:** Software engineer, product manager, or technical consultant
-- **Context:** Maintains extensive documentation across multiple projects, manages daily notes, tracks goals and habits
-- **Pain Points:** Manually organizing notes is time-consuming, searching for information is inefficient, repeating similar vault structures for different systems, switching between devices interrupts workflow
-- **Goals:** Seamless multi-device access, intelligent search and retrieval, automated note organization, voice-based capture while mobile
+- **Context:** Maintains extensive documentation across multiple projects, manages daily notes, and integrates various tools into workflows
+- **Pain Points:** Context switching between AI tools and Obsidian, lack of programmatic vault access from AI, vendor lock-in with OpenAI, difficulty customizing AI behavior per use case
+- **Goals:** Local AI control with LM Studio/Ollama, agents that can read and write vault files, ability to use agents as building blocks in complex workflows, API access for custom integrations
 
 **Sam, the Knowledge Architect** (30-50)
 - **Role:** Researcher, writer, or knowledge management consultant
-- **Context:** Manages thousands of interconnected notes, complex taxonomies, and multiple knowledge systems
-- **Pain Points:** Building new systems from scratch takes hours, difficult to maintain consistency across vault, hard to find relevant connections, scaling vault structure is challenging
-- **Goals:** AI-assisted system design, semantic search across entire vault, automated metadata management, intelligent note linking
+- **Context:** Manages thousands of interconnected notes with complex metadata schemas and custom workflows
+- **Pain Points:** AI assistants lack understanding of vault structure, can't directly manipulate files, require copy-pasting content, don't integrate with Obsidian plugins
+- **Goals:** Agents that understand vault organization, can create and modify notes programmatically, leverage existing plugins (Templater, Dataview), compose specialized agents for different tasks
 
-**Jordan, the Digital Nomad** (25-40)
-- **Role:** Freelancer, consultant, or remote worker constantly on the move
-- **Context:** Works from phone, tablet, and laptop throughout the day
-- **Pain Points:** Mobile note-taking is clunky, context switching between devices loses state, can't access full vault power on mobile, voice capture would be ideal but Obsidian lacks it
-- **Goals:** Full agent access from any device, persistent sessions across devices, voice-based note capture, real-time synchronization
+**Jordan, the Local-First Advocate** (25-40)
+- **Role:** Privacy-conscious professional or consultant
+- **Context:** Runs local LLMs for sensitive work, avoids cloud AI services
+- **Pain Points:** Most AI tools require cloud APIs, self-hosted solutions lack polish, difficult to integrate local models with Obsidian, limited tooling for local setups
+- **Goals:** Complete local operation (LM Studio, Ollama), no telemetry or external calls, extensible via MCP protocol, standards-compliant API for compatibility
+
+**Taylor, the Automation Builder** (30-50)
+- **Role:** Software developer or technical operations specialist
+- **Context:** Builds custom automation and integration workflows across multiple tools
+- **Pain Points:** Obsidian's plugin API requires TypeScript development, AI integrations are one-off scripts, agent capabilities are siloed across different services
+- **Goals:** OpenAI-compatible API to drop-in existing tools, agent composition enables complex workflows, MCP support allows connecting external services, programmatic agent configuration
 
 ## The Problem
 
-### Knowledge Management at Scale is Tedious and Inefficient
-Modern knowledge workers accumulate thousands of notes but spend disproportionate time on organizational overhead rather than creative work. Building new systems (goal tracking, finance, project management) requires hours of research, template creation, and structural planning. Finding information relies on remembering exact keywords rather than concepts. Obsidian's plugin ecosystem is powerful but requires significant manual configuration and lacks intelligent, context-aware assistance.
+### AI Assistants Are Disconnected from Knowledge Management Systems
+Modern knowledge workers use AI extensively but experience friction at every interaction. AI tools require manual copy-pasting of context from notes, can't directly manipulate vault files, lack understanding of vault structure and metadata, and operate independently of the Obsidian plugin ecosystem. This creates a tedious workflow: read note → copy to AI → get response → manually apply changes → return to Obsidian.
 
-**Our Solution:** Deploy autonomous AI agents with direct vault access that understand your intent, assist with system design, manage daily operations, and provide natural language interaction. Agents run on a central server with API access from all devices, enabling seamless multi-device workflows.
+**Our Solution:** Deploy AI agents directly inside Obsidian with full programmatic vault access. Agents can read files, create notes, update metadata, search content, and leverage Obsidian plugins (Templater, Omnisearch) as native capabilities. The agent server runs within the plugin, eliminating context switching entirely.
 
-### Multi-Device Workflows are Fragmented
-Users want full vault functionality on phones, tablets, and multiple computers, but Obsidian's mobile experience is limited. Current solutions require separate apps, lose conversation context when switching devices, and lack the processing power for AI operations on mobile.
+### Local AI Users Lack Production-Grade Tooling
+Users running local LLMs (LM Studio, Ollama) for privacy or cost reasons face significant integration challenges. Most AI frameworks assume OpenAI API, local setups require custom code and lack polish, and extending capabilities means forking projects or writing one-off scripts. The result is a fragmented landscape where local AI power users cobble together brittle, unmaintained solutions.
 
-**Our Solution:** Centralized agent server (Mac Studio) handles all AI processing with REST and WebSocket APIs. Client devices maintain persistent sessions, receive real-time notifications, and access full agent capabilities regardless of device constraints.
+**Our Solution:** First-class support for local model providers with automatic model discovery, an OpenAI-compatible API that works with existing tools (Continue, custom clients), and MCP protocol integration enabling standardized extensions without custom code. Local users get the same polished experience as cloud users.
 
-### Information Retrieval Relies on Exact Matches
-Traditional search requires remembering specific keywords. Users know they have relevant information but can't find it because they don't recall exact phrasing. Related notes remain siloed because connections aren't obvious.
+### Multi-Agent Workflows Require Custom Development
+Building sophisticated AI workflows typically requires prompt engineering expertise and custom development. Users want specialized agents (research agent, writing agent, task manager) that collaborate but must either engineer complex system prompts or build custom orchestration systems. Agent composition - using agents as building blocks - is a programming task, not a configuration task.
 
-**Our Solution:** Vector search with semantic understanding finds notes by concept, not keywords. "Notes about project deadlines" surfaces relevant content even if those exact words aren't present. Agents leverage this to provide contextual recommendations and discover hidden connections.
+**Our Solution:** Agent composition as a first-class feature. Any agent can expose itself as a tool for other agents. Create a research agent, enable "use as tool," then add it to your orchestrator agent's toolkit. Agents receive custom tool names and descriptions, enabling natural delegation without prompt engineering. The orchestrator agent can automatically route requests to specialists based on capability.
+
+### Extensibility Requires Plugin Development
+Extending AI agent capabilities in Obsidian currently requires TypeScript plugin development - a high barrier to entry. Users want to connect agents to external tools (web search, databases, APIs) but lack a standardized extension mechanism. Every new capability means forking the plugin, managing dependencies, and maintaining custom builds.
+
+**Our Solution:** Model Context Protocol (MCP) integration enables zero-code extensibility. Connect stdio servers (local commands) or SSE servers (HTTP endpoints) that expose tools via the MCP specification. Agents automatically discover available tools, and users configure which agents can access which MCP servers. This unlocks the entire MCP ecosystem (Context7, Ref, custom servers) without writing plugin code.
 
 ## Differentiators
 
-### Direct Vault Integration with Multi-Agent Intelligence
-Unlike external AI assistants or chatbots, our agents have direct programmatic access to the Obsidian vault through the plugin API. This enables atomic operations (create files, update metadata, run Dataview queries, configure plugins) rather than just providing suggestions. The orchestrator agent intelligently routes requests to specialized agents (journal, system builder), enabling sophisticated workflows without user prompt engineering.
+### Direct Vault Integration with Full Programmatic Access
+Unlike external AI tools or cloud services, our agents have direct access to the Obsidian vault through the plugin API. This enables atomic operations - create files with templates, update frontmatter, run Omnisearch queries, invoke Templater templates - rather than just providing suggestions. Agents understand vault structure, respect folder organization, and leverage metadata.
 
-This results in agents that truly augment your workflow rather than being disconnected advisory tools.
+This results in agents that truly augment your workflow rather than being disconnected advisory tools. They don't just suggest changes - they make them.
 
-### Centralized Server with Universal Device Access
-Unlike device-specific AI solutions, our architecture centralizes AI processing on a powerful control device (Mac Studio) while enabling lightweight client access from any device. Sessions persist across devices - start a conversation on your phone, continue on MacBook, receive completion notifications everywhere. This is impossible with traditional per-device LLM approaches due to resource constraints and context fragmentation.
+### Agent Composition Without Prompt Engineering
+Unlike monolithic AI systems, we enable hierarchical agent composition as a configuration option. Create specialized agents (research, writing, analysis), enable "use as tool" for each, then add them to an orchestrator's toolkit. The orchestrator automatically delegates based on agent descriptions and tool parameters. Users build complex workflows by composing agents, not writing intricate prompts.
 
-This results in consistent AI capabilities regardless of which device you're using, with no compromises on model quality or context depth.
+This results in maintainable, modular AI systems where each agent has a clear responsibility and can be improved independently.
 
-### Semantic Understanding Through Vector Search
-Unlike basic keyword search, we vectorize plugin documentation and user-selected vault content using embeddings, enabling conceptual search. The System Builder Agent leverages this to understand plugin capabilities semantically, learn from your existing vault structure, and avoid duplicating functionality. Users can search their knowledge base by meaning rather than exact text matches.
+### Local-First with Universal API Compatibility
+Unlike cloud-dependent AI tools, we provide first-class support for local LLM providers (LM Studio, Ollama) with automatic model discovery. Unlike local-only solutions, we expose an OpenAI-compatible REST API with streaming support. This means privacy-conscious users can run everything locally while still using existing tools (Continue.dev, OWUI, custom clients) designed for OpenAI.
 
-This results in dramatically improved information discovery and intelligent agent assistance grounded in your actual vault content and structure.
+This results in the best of both worlds: complete local control with ecosystem compatibility.
 
-### Agent-Assisted System Building
-Unlike manual system creation, the System Builder Agent collaborates with users to design, implement, and document complete vault systems (goals tracking, finance management, entertainment libraries). It researches plugin capabilities, proposes metadata schemas, creates templates, sets up Dataview queries, and documents usage - tasks that would take hours manually.
+### Zero-Code Extensibility via MCP Protocol
+Unlike plugins requiring TypeScript development, we support the Model Context Protocol standard. Users connect MCP servers (stdio commands or HTTP endpoints) that expose tools, and agents automatically discover and use them. This unlocks the growing MCP ecosystem (web search, databases, APIs, custom services) without custom plugin development.
 
-This results in rapid deployment of sophisticated, well-structured vault systems with minimal user effort.
+This results in extensible agents that can grow capabilities by installing MCP servers, not by forking code.
+
+### OpenAI-Compatible Multi-Agent API
+Unlike proprietary agent systems, we expose agents through a standards-compliant REST API. Each agent appears as a "model" in the `/v1/models` endpoint. Clients send requests to `/v1/chat/completions` with the agent name as the model parameter. Full streaming support via Server-Sent Events enables real-time tool execution visibility.
+
+This results in universal client compatibility - any OpenAI-compatible client can access your agents across devices and platforms.
 
 ## Key Features
 
 ### Core Features
-- **Multi-Agent Orchestration:** Central orchestrator intelligently routes requests to specialized agents (journal, system builder) with support for complex multi-agent workflows
-- **REST API Access:** OpenAI-compatible API enables universal client compatibility (OWUI, custom apps, web interfaces) from any device on the network
-- **Persistent Sessions:** Conversation history survives across requests, plugin reloads, and device switches with SQLite-backed session storage
-- **Direct Vault Operations:** Agents have full programmatic vault access for file creation, editing, frontmatter updates, plugin configuration, and Dataview queries
-- **LM Studio Integration:** Local model hosting (qwen3-30b orchestrator, qwen3-8b specialists) ensures privacy and eliminates API costs
+- **Multi-Agent Framework:** Create unlimited custom agents with unique instructions, model selections, and tool configurations per agent
+- **Local Model Providers:** First-class support for LM Studio and Ollama with automatic model discovery from provider endpoints
+- **Agent Composition:** Agents can use other agents as tools - enable "use as tool" and configure tool names/descriptions for natural delegation
+- **OpenAI-Compatible API:** REST API at `/v1/models` and `/v1/chat/completions` with full streaming support (SSE) for universal client compatibility
+- **Persistent Configuration:** All agent settings, model providers, and tool configurations persist in Obsidian's plugin data
 
-### Collaboration Features
-- **Multi-Device Support:** MacBook, phone, and other clients connect simultaneously with independent sessions and shared agent access
-- **WebSocket Notifications:** Real-time completion summaries, progress updates, status messages, and file event notifications delivered to all connected clients
-- **System Builder Agent:** Collaborative system design through natural language - agent asks clarifying questions, researches plugins, proposes architectures, and implements solutions
-- **Session Management:** View active sessions, clear history, track session metadata, and manage device-specific preferences
+### Vault Integration Features
+- **Read File:** Read file contents from any vault path with path validation against allowed/excluded folders
+- **Create File:** Create new files with custom content, optional frontmatter, and timestamp control
+- **Update File:** Modify existing file contents with full or partial rewrites
+- **Delete File:** Remove files from vault with safety checks
+- **Count Notes:** Get total markdown file count for vault metrics
+- **Create From Template:** Use Templater plugin templates for structured content creation
+- **Omnisearch Integration:** Leverage Omnisearch plugin for semantic vault-wide search
+- **Path Controls:** Per-agent included/excluded folder paths enforce fine-grained file access restrictions
+
+### MCP Integration Features
+- **Stdio Transport:** Run local commands as MCP servers with custom arguments and environment variables
+- **SSE Transport:** Connect to HTTP-based MCP servers via Server-Sent Events
+- **Automatic Tool Discovery:** MCP servers expose tools via standardized protocol, agents discover them dynamically
+- **Per-Agent Tool Selection:** Configure which MCP servers and specific tools each agent can access
+- **Tool Caching:** Optional caching of tool lists from MCP servers for performance
+- **Connection Management:** Health monitoring, automatic reconnection, and graceful error handling for MCP server connections
+
+### Agent Management Features
+- **Enable/Disable Agents:** Toggle agents without losing configuration - disabled agents don't appear in API
+- **Model Selection Per Agent:** Different agents can use different models from different providers
+- **Custom Instructions:** Tailor system prompts for each agent's role and capabilities
+- **Tool Configuration:** Select vault tools, MCP tools, and other agents as tools independently per agent
+- **Agent Settings API:** Agents can read and modify their own settings programmatically via vault tools
+- **Server Restart API:** Agents can trigger server restart to apply configuration changes
 
 ### Advanced Features
-- **Vector Search (Qdrant):** Semantic search across plugin documentation and user-configured vault folders enables conceptual information retrieval
-- **Plugin Documentation Indexing:** Automatic vectorization of enabled plugins for intelligent capability discovery and recommendation
-- **Vault Content Vectorization:** User-configurable folder indexing with automatic updates enables semantic search across your knowledge base
-- **Multi-Modal Processing:** Image analysis (OCR, description, tags), image generation, PDF text extraction, and video processing (transcription, frame extraction)
-- **Request Queue Management:** FIFO queue handles concurrent requests without overwhelming LM Studio, with health monitoring and graceful error handling
-- **Settings-Controlled Notifications:** Granular control over notification types, per-device preferences, and delivery channels
+- **Streaming Tool Execution:** Real-time visibility into agent tool calls and intermediate steps during streaming responses
+- **CORS Support:** Full CORS enablement for cross-origin requests from web clients
+- **Dynamic Model Discovery:** Automatic fetching of available models from configured providers
+- **Settings UI:** React-based settings interface with Radix UI components for intuitive configuration
+- **Device ID System:** Unique device identification for future multi-device coordination features
+- **Configurable Port:** Customize server port for network flexibility (default: 2345)

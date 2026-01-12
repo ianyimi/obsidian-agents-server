@@ -1,37 +1,46 @@
 # Product Roadmap
 
-1. [ ] Core Agent Framework — Implement multi-agent system (Orchestrator + Journal + System Builder) with LM Studio integration, session management, and direct vault access for file operations. `L`
+## Phase 0: Immediate Priority
 
-2. [ ] REST API Server — Build OpenAI-compatible REST API with endpoints for chat completions, session management, tool invocation, and health monitoring. Include request queue and error handling. `M`
+1. [ ] Conversation History & Sessions — Implement persistent conversation storage per agent using SQLite. Enable session management, conversation history viewing, context window management, and conversation export. `M`
 
-3. [ ] WebSocket Notification System — Implement real-time notification server for completion summaries, errors, and file events. Support multiple connected clients with device-specific preferences. `M`
+2. [ ] **LM Studio Context Compaction** — Implement automatic context window management for local models with conversation summarization, intelligent message pruning, and token-aware compaction. Leverage session history to maintain conversation coherence while staying within model context limits. `M`
 
-4. [ ] Device ID & Multi-Device Architecture — Create device identification system distinguishing control device (Mac Studio) from clients. Enable settings UI for device configuration and client-server connection management. `S`
+3. [ ] **Obsidian LiveSync Integration** — Enable multi-device setup where one machine runs the server and others sync configuration. Implement config change detection, automatic plugin restart on config updates, and LiveSync protocol integration. Support distributed vault architecture with central server model. `L`
 
-5. [ ] Journal Agent & Core Functions — Build journal specialist agent with functions for daily note creation, quick logging, task management, and search capabilities. Integrate with vault structure and metadata. `M`
+4. [ ] WebSocket Notification System — Implement real-time notifications to connected clients for agent completion events, long-running task updates, and vault file changes. Enable multi-device monitoring. Support LiveSync integration for config change propagation. `M`
 
-6. [ ] System Builder Agent & Plugin Documentation — Implement system builder specialist with plugin docs fetching, caching, and semantic understanding. Enable file creation, editing, and vault system design workflows. `L`
+5. [ ] Vector Search Foundation — Integrate vector database (Qdrant or Chroma) for semantic search capabilities. Implement document embeddings, similarity search API, and vault content indexing with user-configurable folders. `L`
 
-7. [ ] Client Device Setup & Testing — Configure OWUI and mobile clients to connect to agent server. Verify multi-device simultaneous access, session persistence, and notification delivery across devices. `M`
+6. [ ] Multi-Modal Processing — Add support for image analysis (OCR, description), PDF text extraction, and audio transcription. Create vault tools for processing multimedia content and generating structured outputs. `L`
 
-8. [ ] Vector Search Integration (Qdrant) — Deploy Qdrant vector database, implement embedding generation (nomic-embed-text), create collections for plugin docs and vault content. Enable semantic search capabilities. `L`
+7. [ ] Semantic Vault Search Tool — Build vault tool that leverages vector search for conceptual queries. Enable "find notes about deadlines" style queries that surface relevant content regardless of exact keyword matches. `M`
 
-9. [ ] Plugin Documentation Vectorization — Build pipeline to chunk, embed, and index all enabled plugin documentation. Implement search_plugin_docs function for semantic plugin capability discovery. `M`
+8. [ ] Advanced Agent Composition — Enhance agent-as-tool system with automatic capability description generation, agent output formatting controls, and hierarchical agent workflows with conditional routing. `M`
 
-10. [ ] Vault Content Vectorization — Create user-configurable vault indexing with folder filtering, batch processing, auto-updates on file changes, and progress tracking. Implement search_vault_content function. `L`
+## Phase 1: Extended Features
 
-11. [ ] Enhanced WebSocket Notifications — Expand notification types to include progress updates, status messages, and granular file events. Add settings control for notification preferences and per-device customization. `S`
+9. [ ] Enhanced Vault Tools — Expand vault tool capabilities with file search by frontmatter, batch operations, metadata extraction, folder creation, and file rename/move operations. Enable agents to manage complex vault structures. `M`
 
-12. [ ] Multi-Modal Processing Suite — Implement image analysis (OCR, description, tagging), image generation, PDF text extraction, and video processing (transcription, frame extraction, metadata). `L`
+10. [ ] Custom Tool System — Build UI for users to define custom tools via JavaScript functions or shell commands. Enable tool registration, parameter validation via Zod schemas, and execution sandboxing for safety. `L`
 
-13. [ ] Vault System Building Workflow — Use enhanced System Builder Agent to collaboratively design and implement vault systems (goals, finance, entertainment tracking, etc.) with semantic search and user guidance. `XL`
+11. [ ] Agent Templates Library — Create pre-configured agent templates (Research Assistant, Daily Journal, Task Manager, Writing Coach) with recommended instructions, tools, and model selections. Enable one-click agent creation from templates. `S`
 
-14. [ ] Performance Optimization & Monitoring — Optimize vector search queries, implement caching strategies, tune request queue, add comprehensive error tracking and system health monitoring. `M`
+## Phase 2: Polish & Optimization
 
-15. [ ] Voice Agent Foundation (Phase 3) — Prototype voice interaction approaches (WebRTC real-time, WebSocket audio streaming, or hybrid STT/TTS). Evaluate latency, quality, and device compatibility. `XL`
+12. [ ] **Obsidian Sync Integration** — Add support for Obsidian's official sync service to enable cross-device configuration synchronization. Implement compatibility with both LiveSync and Obsidian Sync for maximum flexibility. `M`
+
+13. [ ] MCP Server Marketplace Integration — Build discovery UI for popular MCP servers with installation instructions, compatibility checking, and automated setup for common servers (Context7, Ref, Brave Search). `M`
+
+14. [ ] Agent Execution Monitoring — Add logging and monitoring for agent executions with detailed tool call traces, error tracking, performance metrics, and execution history view in settings UI. `S`
+
+15. [ ] Agent Performance Optimization — Optimize tool execution caching, implement streaming improvements for large responses, add request queuing for concurrent API calls, and fine-tune model context management. `S`
 
 > Notes
-> - Roadmap follows three-phase architecture: Phase 1 (items 1-7) establishes core framework, Phase 2 (items 8-14) adds intelligence and multi-modal capabilities, Phase 3 (item 15+) enables voice and open-ended augmentation
-> - Items ordered by technical dependencies: agents before APIs, APIs before clients, core search before vectorization, basic functions before advanced features
-> - Each item represents end-to-end functionality: backend implementation + client integration + testing verification
-> - System Builder workflows (item 13) span multiple iterations as different vault systems are built collaboratively with the agent
+> - **Phase 0** focuses on intelligent features (vector search, multi-modal, advanced composition), local model support (context compaction), and essential infrastructure (sessions, LiveSync integration, WebSocket for sync support)
+> - **Phase 1** adds core extensibility (enhanced tools, custom tools, templates)
+> - **Phase 2** adds polish, optimization, monitoring, and additional sync options (Obsidian Sync, MCP marketplace)
+> - LiveSync integration enables distributed architecture: one server device + multiple client devices syncing configuration
+> - Context compaction leverages session history to enable better LM Studio model support with automatic window management
+> - WebSocket system supports real-time config propagation for LiveSync integration
+> - Each item represents complete, testable functionality from backend implementation through UI integration

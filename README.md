@@ -412,14 +412,31 @@ obsidian-agents-server/
 
 ## Roadmap
 
-- [ ] Add more built-in vault tools
-- [ ] Support for custom user tools via UI
-- [ ] Agent execution history and logging
-- [ ] Rate limiting and quota management
-- [ ] Agent-to-agent communication protocol
-- [ ] Multi-device agent orchestration
-- [ ] Plugin marketplace integration
-- [ ] Web UI for agent monitoring
+### Phase 0: Immediate Priority
+
+- [ ] **Conversation History & Sessions** - Persistent conversation storage per agent using SQLite with session management and export capabilities
+- [ ] **LM Studio Context Compaction** - Automatic context window management for local models with intelligent summarization and token-aware compaction
+- [ ] **Obsidian LiveSync Integration** - Multi-device setup enabling one machine to run the server while others sync configuration with automatic plugin restart
+- [ ] **WebSocket Notification System** - Real-time notifications for agent completions, long-running tasks, and vault changes across LiveSync-connected devices
+- [ ] **Vector Search Foundation** - Integrate vector database (Qdrant/Chroma) for semantic search with document embeddings and vault content indexing
+- [ ] **Multi-Modal Processing** - Support for image analysis (OCR, description), PDF text extraction, and audio transcription
+- [ ] **Semantic Vault Search Tool** - Natural language vault queries leveraging vector search for conceptual searches
+- [ ] **Advanced Agent Composition** - Enhanced agent-as-tool system with automatic capability descriptions and hierarchical workflows
+
+### Phase 1: Extended Features
+
+- [ ] **Enhanced Vault Tools** - Expanded file operations with frontmatter search, batch operations, metadata extraction, and file management
+- [ ] **Custom Tool System** - UI for user-defined tools via JavaScript/shell commands with validation and sandboxing
+- [ ] **Agent Templates Library** - Pre-configured agent templates (Research Assistant, Task Manager, etc.) for one-click creation
+
+### Phase 2: Polish & Optimization
+
+- [ ] **Obsidian Sync Integration** - Support for Obsidian's official sync service alongside LiveSync
+- [ ] **MCP Server Marketplace Integration** - Discovery UI for popular MCP servers with automated setup
+- [ ] **Agent Execution Monitoring** - Detailed logging with tool call traces, error tracking, and performance metrics
+- [ ] **Agent Performance Optimization** - Tool execution caching, streaming improvements, and request queuing
+
+For detailed feature descriptions, see [agent-os/product/roadmap.md](agent-os/product/roadmap.md)
 
 ## Contributing
 
